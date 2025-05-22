@@ -18,11 +18,26 @@ import NotFound from './pages/NotFound';
 import { AuthProvider } from './context/AuthContext';
 
 function App() {
-  const { initializeAuth, session } = useAuthStore();
+  const { initializeAuth, session, loading } = useAuthStore();
 
   useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <img 
+            src="/assets/yama-face.png" 
+            alt="Yama" 
+            className="w-16 h-16 mx-auto mb-4 animate-bounce" 
+          />
+          <p className="text-gray-600 dark:text-gray-300">Loading your workspace...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AuthProvider>
