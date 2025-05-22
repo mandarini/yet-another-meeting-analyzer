@@ -69,9 +69,32 @@ async function processTranscript(transcript: string): Promise<AnalysisResults> {
           4. Follow-up commitments with deadlines
           5. Nx-specific opportunities
           
-          Format the output as a structured JSON object matching the AnalysisResults interface.
+          Format the output as a structured JSON object with the following structure:
+          {
+            "topics": string[],
+            "painPoints": Array<{
+              "description": string,
+              "urgencyScore": number,
+              "category": string,
+              "relatedNxFeatures"?: string[]
+            }>,
+            "followUps": Array<{
+              "description": string,
+              "deadline": string,
+              "assignedTo"?: string
+            }>,
+            "nxOpportunities": Array<{
+              "feature": string,
+              "confidenceScore": number,
+              "suggestedApproach": string
+            }>,
+            "executiveSummary": string,
+            "participants": string[]
+          }
+
           For participants, extract them from the conversation flow and context.
-          For topics, identify 3-5 main themes discussed in the meeting.`
+          For topics, identify 3-5 main themes discussed in the meeting.
+          Ensure all arrays are initialized even if empty.`
       },
       {
         role: 'user',
@@ -81,11 +104,25 @@ async function processTranscript(transcript: string): Promise<AnalysisResults> {
     temperature: 0.2,
   });
 
-  const results = JSON.parse(response.choices[0].message.content) as AnalysisResults;
-  return results;
+  const results = JSON.parse(response.choices[0].message.content);
+  
+  // Ensure all required arrays exist
+  return {
+    topics: results.topics || [],
+    painPoints: results.painPoints || [],
+    followUps: results.followUps || [],
+    nxOpportunities: results.nxOpportunities || [],
+    recurringIssues: results.recurringIssues || [],
+    executiveSummary: results.executiveSummary || '',
+    participants: results.participants || []
+  };
 }
 
 async function generateEmbeddings(painPoints: AnalysisResults['painPoints']) {
+  if (!Array.isArray(painPoints) || painPoints.length === 0) {
+    return [];
+  }
+
   const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
   if (!openaiApiKey) {
     throw new Error('Missing OpenAI API key');
@@ -94,18 +131,19 @@ async function generateEmbeddings(painPoints: AnalysisResults['painPoints']) {
   const openai = new OpenAI({
     apiKey: openaiApiKey,
   });
-  
-  if (!painPoints || painPoints.length === 0) {
-    return [];
-  }
 
   return Promise.all(
     painPoints.map(async (point) => {
-      const response = await openai.embeddings.create({
-        model: 'text-embedding-ada-002',
-        input: point.description,
-      });
-      return response.data[0].embedding;
+      try {
+        const response = await openai.embeddings.create({
+          model: 'text-embedding-ada-002',
+          input: point.description,
+        });
+        return response.data[0].embedding;
+      } catch (error) {
+        console.error('Error generating embedding:', error);
+        return null;
+      }
     })
   );
 }
@@ -113,17 +151,24 @@ async function generateEmbeddings(painPoints: AnalysisResults['painPoints']) {
 async function findSimilarPainPoints(
   supabase: any,
   companyId: string,
-  embedding: number[],
+  embedding: number[] | null,
   threshold = 0.85
 ) {
-  const { data, error } = await supabase.rpc('match_pain_points', {
-    query_embedding: embedding,
-    similarity_threshold: threshold,
-    company_id: companyId,
-  });
+  if (!embedding) return [];
 
-  if (error) throw error;
-  return data;
+  try {
+    const { data, error } = await supabase.rpc('match_pain_points', {
+      query_embedding: embedding,
+      similarity_threshold: threshold,
+      company_id: companyId,
+    });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error finding similar pain points:', error);
+    return [];
+  }
 }
 
 Deno.serve(async (req) => {
@@ -151,9 +196,6 @@ Deno.serve(async (req) => {
 
     // Process transcript
     const analysisResults = await processTranscript(transcript);
-
-    // Generate embeddings for pain points
-    const embeddings = await generateEmbeddings(analysisResults.painPoints);
 
     // Create or update company
     const { data: company } = await supabase
@@ -186,47 +228,53 @@ Deno.serve(async (req) => {
 
     if (meetingError) throw meetingError;
 
+    // Generate embeddings for pain points
+    const embeddings = await generateEmbeddings(analysisResults.painPoints);
+
     // Store pain points with embeddings
     const painPointPromises = analysisResults.painPoints.map(async (point, index) => {
-      const { data: painPoint } = await supabase
-        .from('pain_points')
-        .insert({
-          meeting_id: meetingId,
-          description: point.description,
-          urgency_score: point.urgencyScore,
-          category: point.category,
-          related_nx_features: point.relatedNxFeatures,
-        })
-        .select()
-        .single();
-
-      if (painPoint && embeddings[index]) {
-        // Find similar pain points
-        const similarPoints = await findSimilarPainPoints(
-          supabase,
-          company.id,
-          embeddings[index]
-        );
-
-        if (similarPoints.length > 0) {
-          // Update or create recurring issue
-          await supabase.from('recurring_issues').upsert({
-            company_id: company.id,
+      try {
+        const { data: painPoint } = await supabase
+          .from('pain_points')
+          .insert({
+            meeting_id: meetingId,
             description: point.description,
-            occurrences: similarPoints.map((sp: any) => ({
-              date: sp.created_at,
-              meeting_id: sp.meeting_id,
-            })),
-            priority: point.urgencyScore * similarPoints.length,
-          });
-        }
-      }
+            urgency_score: point.urgencyScore,
+            category: point.category,
+            related_nx_features: point.relatedNxFeatures,
+          })
+          .select()
+          .single();
 
-      return painPoint;
+        if (painPoint && embeddings[index]) {
+          const similarPoints = await findSimilarPainPoints(
+            supabase,
+            company.id,
+            embeddings[index]
+          );
+
+          if (similarPoints.length > 0) {
+            await supabase.from('recurring_issues').upsert({
+              company_id: company.id,
+              description: point.description,
+              occurrences: similarPoints.map((sp: any) => ({
+                date: sp.created_at,
+                meeting_id: sp.meeting_id,
+              })),
+              priority: point.urgencyScore * similarPoints.length,
+            });
+          }
+        }
+
+        return painPoint;
+      } catch (error) {
+        console.error('Error processing pain point:', error);
+        return null;
+      }
     });
 
     // Store follow-ups
-    const followUpPromises = analysisResults.followUps.map((followUp) =>
+    const followUpPromises = (analysisResults.followUps || []).map((followUp) =>
       supabase.from('follow_ups').insert({
         meeting_id: meetingId,
         description: followUp.description,
@@ -236,7 +284,7 @@ Deno.serve(async (req) => {
     );
 
     // Store Nx opportunities
-    const opportunityPromises = analysisResults.nxOpportunities.map((opportunity) =>
+    const opportunityPromises = (analysisResults.nxOpportunities || []).map((opportunity) =>
       supabase.from('nx_opportunities').insert({
         meeting_id: meetingId,
         nx_feature: opportunity.feature,
@@ -255,9 +303,11 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        meetingId,
-        companyName,
-        analysisResults,
+        data: {
+          meetingId,
+          companyName,
+          analysisResults,
+        }
       }),
       {
         headers: {
