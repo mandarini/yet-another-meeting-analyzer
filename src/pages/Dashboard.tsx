@@ -4,8 +4,7 @@ import { useDashboardStore } from '../stores/dashboardStore';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
-import { Line } from 'react-chartjs-2';
-import { ResponsiveContainer, LineChart, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { ResponsiveContainer, LineChart, XAxis, YAxis, CartesianGrid, Tooltip, Line } from 'recharts';
 import {
   BarChart2,
   AlertCircle,
@@ -16,27 +15,15 @@ import {
   TrendingUp,
 } from 'lucide-react';
 
-// Mock data for chart
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip as ChartTooltip,
-  Legend,
-} from 'chart.js';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  ChartTooltip,
-  Legend
-);
+// Chart data
+const chartData = [
+  { name: 'Jan', painPoints: 12, followUps: 8 },
+  { name: 'Feb', painPoints: 19, followUps: 11 },
+  { name: 'Mar', painPoints: 15, followUps: 13 },
+  { name: 'Apr', painPoints: 17, followUps: 9 },
+  { name: 'May', painPoints: 14, followUps: 7 },
+  { name: 'Jun', painPoints: 10, followUps: 5 },
+];
 
 const Dashboard = () => {
   const { 
@@ -51,44 +38,6 @@ const Dashboard = () => {
   useEffect(() => {
     loadDashboardData();
   }, [loadDashboardData]);
-
-  // Chart data
-  const chartData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-    datasets: [
-      {
-        label: 'Pain Points',
-        data: [12, 19, 15, 17, 14, 10],
-        borderColor: '#4f46e5',
-        backgroundColor: 'rgba(79, 70, 229, 0.2)',
-        tension: 0.4,
-      },
-      {
-        label: 'Follow-ups',
-        data: [8, 11, 13, 9, 7, 5],
-        borderColor: '#0d9488',
-        backgroundColor: 'rgba(13, 148, 136, 0.2)',
-        tension: 0.4,
-      },
-    ],
-  };
-
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'top' as const,
-      },
-      title: {
-        display: false,
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-      },
-    },
-  };
 
   // Function to get badge variant based on category
   const getCategoryBadge = (category: string) => {
@@ -208,17 +157,25 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData.datasets[0].data.map((value, index) => ({
-                name: chartData.labels[index],
-                painPoints: value,
-                followUps: chartData.datasets[1].data[index]
-              }))}>
+              <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="painPoints" stroke="#4f46e5" name="Pain Points" />
-                <Line type="monotone" dataKey="followUps" stroke="#0d9488" name="Follow-ups" />
+                <Line 
+                  type="monotone" 
+                  dataKey="painPoints" 
+                  stroke="#FF7B7B" 
+                  name="Pain Points"
+                  strokeWidth={2}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="followUps" 
+                  stroke="#FF9B9B" 
+                  name="Follow-ups"
+                  strokeWidth={2}
+                />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
