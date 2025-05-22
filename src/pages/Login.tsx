@@ -21,7 +21,6 @@ const Login = () => {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="flex flex-col items-center mb-6">
-            {/* This is a placeholder for the full logo. Replace the src when you add the actual logo */}
             <img 
               src="/src/assets/yama-io.png"
               alt="Yama Logo" 
