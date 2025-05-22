@@ -45,10 +45,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ loading: true, error: null });
     
     try {
+      const redirectTo = import.meta.env.PROD 
+        ? 'https://yama-io.netlify.app/login'
+        : `${window.location.origin}/login`;
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}`,
+          redirectTo,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -74,10 +78,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ loading: true, error: null });
     
     try {
+      const redirectTo = import.meta.env.PROD 
+        ? 'https://yama-io.netlify.app/login'
+        : `${window.location.origin}/login`;
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${window.location.origin}`,
+          redirectTo,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
