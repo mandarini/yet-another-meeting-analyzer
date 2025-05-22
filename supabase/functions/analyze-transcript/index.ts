@@ -13,7 +13,6 @@ interface TranscriptInput {
 
 interface AnalysisResults {
   metadata: {
-    participantNames: string[];
     detectedTopics: string[];
   };
   painPoints: Array<{
@@ -41,6 +40,7 @@ interface AnalysisResults {
     priority: number;
   }>;
   executiveSummary: string;
+  participants: string[];
 }
 
 const corsHeaders = {
@@ -65,12 +65,13 @@ async function processTranscript(transcript: string): Promise<AnalysisResults> {
       {
         role: 'system',
         content: `You are an expert at analyzing meeting transcripts and extracting structured information. Focus on identifying:
-          1. Participant information
+          1. Participant names and roles from the conversation context
           2. Technical pain points with urgency scoring
           3. Follow-up commitments with deadlines
           4. Nx-specific opportunities
           
-          Format the output as a structured JSON object matching the AnalysisResults interface.`
+          Format the output as a structured JSON object matching the AnalysisResults interface.
+          For participants, extract them from the conversation flow and context.`
       },
       {
         role: 'user',
@@ -174,7 +175,7 @@ Deno.serve(async (req) => {
         date: meetingDate,
         title: meetingTitle || `Meeting with ${companyName}`,
         company_id: company.id,
-        participants: analysisResults.metadata.participantNames,
+        participants: analysisResults.participants,
         transcript_raw: transcript,
         transcript_processed: {
           topics: analysisResults.metadata.detectedTopics,
