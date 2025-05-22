@@ -12,9 +12,7 @@ interface TranscriptInput {
 }
 
 interface AnalysisResults {
-  metadata: {
-    detectedTopics: string[];
-  };
+  topics: string[];
   painPoints: Array<{
     description: string;
     urgencyScore: number;
@@ -65,13 +63,15 @@ async function processTranscript(transcript: string): Promise<AnalysisResults> {
       {
         role: 'system',
         content: `You are an expert at analyzing meeting transcripts and extracting structured information. Focus on identifying:
-          1. Participant names and roles from the conversation context
-          2. Technical pain points with urgency scoring
-          3. Follow-up commitments with deadlines
-          4. Nx-specific opportunities
+          1. Main discussion topics
+          2. Participant names and roles from the conversation context
+          3. Technical pain points with urgency scoring
+          4. Follow-up commitments with deadlines
+          5. Nx-specific opportunities
           
           Format the output as a structured JSON object matching the AnalysisResults interface.
-          For participants, extract them from the conversation flow and context.`
+          For participants, extract them from the conversation flow and context.
+          For topics, identify 3-5 main themes discussed in the meeting.`
       },
       {
         role: 'user',
@@ -178,7 +178,7 @@ Deno.serve(async (req) => {
         participants: analysisResults.participants,
         transcript_raw: transcript,
         transcript_processed: {
-          topics: analysisResults.metadata.detectedTopics,
+          topics: analysisResults.topics,
           summary: analysisResults.executiveSummary,
         },
         created_by: userId,
