@@ -97,6 +97,10 @@ async function generateEmbeddings(painPoints: AnalysisResults['painPoints']) {
     apiKey: openaiApiKey,
   });
   
+  if (!painPoints || painPoints.length === 0) {
+    return [];
+  }
+
   return Promise.all(
     painPoints.map(async (point) => {
       const response = await openai.embeddings.create({
