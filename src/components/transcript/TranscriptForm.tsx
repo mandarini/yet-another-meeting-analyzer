@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranscriptStore } from '../../stores/transcriptStore';
 import { useAuthStore } from '../../stores/authStore';
 import { Input, TextArea, Select } from '../ui/FormElements';
-import Button from '../components/ui/Button';
+import Button from '../ui/Button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/Card';
 import { FileText, SendHorizonal, Loader } from 'lucide-react';
 
