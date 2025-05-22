@@ -176,13 +176,15 @@ export const submitTranscript = async (transcriptData: any) => {
           meetingDate: transcriptData.date,
           meetingTitle: transcriptData.title,
           meetingPurpose: transcriptData.purpose,
+          companyName: transcriptData.companyName,
           userId: transcriptData.userId,
         }),
       }
     );
 
     if (!response.ok) {
-      throw new Error('Failed to analyze transcript');
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to analyze transcript');
     }
 
     const result = await response.json();
