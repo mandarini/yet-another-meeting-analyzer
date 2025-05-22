@@ -1,11 +1,46 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '../types/supabase';
 
-// Use environment variables for production, fallback to public values for development
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project-url.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+// For development, if env vars aren't set, return a mock client
+const createMockClient = () => {
+  console.warn('Using mock Supabase client. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY for real data.');
+  return {
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          single: async () => ({ data: null, error: null }),
+          order: () => ({
+            limit: async () => ({ data: [], error: null })
+          }),
+        }),
+        order: () => ({
+          limit: async () => ({ data: [], error: null })
+        }),
+      }),
+      insert: () => ({
+        select: () => ({
+          single: async () => ({ data: null, error: null })
+        })
+      }),
+      update: () => ({
+        eq: async () => ({ error: null })
+      })
+    }),
+    auth: {
+      getSession: async () => ({ data: { session: null }, error: null }),
+      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } }, error: null }),
+      signInWithOAuth: async () => ({ data: null, error: null }),
+      signOut: async () => ({ error: null })
+    }
+  };
+};
+
+export const supabase = supabaseUrl && supabaseAnonKey
+  ? createClient<Database>(supabaseUrl, supabaseAnonKey)
+  : createMockClient() as any;
 
 export const getProfile = async (userId: string) => {
   const { data, error } = await supabase
