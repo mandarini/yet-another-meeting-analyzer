@@ -61,28 +61,26 @@ async function processTranscript(transcript: string): Promise<AnalysisResults> {
   });
 
   // Process transcript with OpenAI
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4',
-    messages: [
-      {
-        role: 'system',
-        content: `You are an expert at analyzing meeting transcripts and extracting structured information. Focus on identifying:
-          1. Company and participant information
-          2. Technical pain points with urgency scoring
-          3. Follow-up commitments with deadlines
-          4. Nx-specific opportunities
-          
-          Format the output as a structured JSON object matching the AnalysisResults interface.`
-      },
-      {
-        role: 'user',
-        content: transcript
-      }
-    ],
-    temperature: 0.2,
-    max_tokens: 2000,
-    response_format: { type: 'json_object' }
-  });
+const response = await openai.chat.completions.create({
+  model: 'gpt-4',
+  messages: [
+    {
+      role: 'system',
+      content: `You are an expert at analyzing meeting transcripts and extracting structured information. Focus on identifying:
+        1. Company and participant information
+        2. Technical pain points with urgency scoring
+        3. Follow-up commitments with deadlines
+        4. Nx-specific opportunities
+        
+        Format the output as a structured JSON object matching the AnalysisResults interface.`
+    },
+    {
+      role: 'user',
+      content: transcript
+    }
+  ],
+  temperature: 0.2,
+});
 
   // Parse and validate the response
   const results = JSON.parse(response.choices[0].message.content) as AnalysisResults;
