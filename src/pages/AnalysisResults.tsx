@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranscriptStore } from '../stores/transcriptStore';
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import { BarChart2, FileText, Check, AlertCircle, ExternalLink, Clock, ArrowLeft } from 'lucide-react';
@@ -47,19 +47,19 @@ const AnalysisResults = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FF7B7B] mx-auto"></div>
           <p className="mt-4 text-gray-600 dark:text-gray-300">Loading analysis results...</p>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  if (error || !currentMeeting) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
         <AlertCircle size={48} className="text-red-500 mb-4" />
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Error Loading Results</h2>
-        <p className="text-gray-600 dark:text-gray-300 mb-6">{error}</p>
+        <p className="text-gray-600 dark:text-gray-300 mb-6">{error || 'Meeting not found'}</p>
         <Link to="/">
           <Button leftIcon={<ArrowLeft size={16} />}>
             Back to Dashboard
@@ -68,39 +68,6 @@ const AnalysisResults = () => {
       </div>
     );
   }
-
-  // Mock data for the analysis result
-  // In a real app, this would come from currentMeeting
-  const analysisData = {
-    id: id || '1',
-    title: 'Acme Inc. Technical Review',
-    date: '2025-06-10',
-    company: 'Acme Inc.',
-    participants: ['John Doe', 'Jane Smith', 'Bob Johnson'],
-    summary: 'This meeting focused on the technical challenges Acme Inc. is facing with their monorepo structure. The team expressed frustration with build times and CI pipeline issues. Several Nx opportunities were identified, particularly around caching and distributed task execution.',
-    painPoints: [
-      { id: '1', description: 'Build times are too slow for large projects', urgency: 8, category: 'build_performance', status: 'active' },
-      { id: '2', description: 'Developer onboarding takes too long', urgency: 6, category: 'developer_experience', status: 'active' },
-      { id: '3', description: 'CI pipeline frequently times out', urgency: 9, category: 'ci_cd_issues', status: 'active' },
-      { id: '4', description: 'Difficulty managing dependencies between projects', urgency: 7, category: 'scaling_challenges', status: 'active' },
-    ],
-    followUps: [
-      { id: '1', description: 'Send documentation on Nx caching', deadline: '2025-06-15', status: 'pending' },
-      { id: '2', description: 'Schedule technical deep dive on distributed task execution', deadline: '2025-06-20', status: 'pending' },
-      { id: '3', description: 'Share case studies of similar implementations', deadline: '2025-06-18', status: 'pending' },
-    ],
-    nxOpportunities: [
-      { id: '1', feature: 'Computation Caching', confidence: 0.9, approach: 'Implement Nx caching to significantly reduce build times by only rebuilding what changed.' },
-      { id: '2', feature: 'Distributed Task Execution', confidence: 0.85, approach: 'Use Nx Cloud to distribute CI tasks across multiple machines, reducing pipeline time by 70%.' },
-      { id: '3', feature: 'Dependency Graph Visualization', confidence: 0.75, approach: 'Leverage Nx dependency graph to help developers understand project relationships.' },
-    ],
-    history: {
-      recurring: [
-        { description: 'Build performance concerns', occurrences: 3 },
-        { description: 'CI pipeline timeouts', occurrences: 2 },
-      ]
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -112,10 +79,10 @@ const AnalysisResults = () => {
                 Back
               </Button>
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{analysisData.title}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{currentMeeting.title}</h1>
           </div>
           <p className="mt-1 text-gray-600 dark:text-gray-300">
-            {formatDate(analysisData.date)} • {analysisData.company}
+            {formatDate(currentMeeting.date)} • {currentMeeting.companies?.name}
           </p>
         </div>
         <div className="mt-4 md:mt-0 flex space-x-2">
@@ -144,7 +111,7 @@ const AnalysisResults = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`${
                 activeTab === tab.id
-                  ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                  ? 'border-[#FF7B7B] text-[#FF7B7B] dark:text-[#FF9B9B]'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
               } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
             >
@@ -168,13 +135,13 @@ const AnalysisResults = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                  {analysisData.summary}
+                  {currentMeeting.transcript_processed?.summary}
                 </p>
 
                 <div className="mt-6">
                   <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Participants:</h3>
                   <div className="flex flex-wrap gap-2">
-                    {analysisData.participants.map((participant, index) => (
+                    {currentMeeting.participants?.map((participant: string, index: number) => (
                       <Badge key={index} variant="default">
                         {participant}
                       </Badge>
@@ -194,7 +161,7 @@ const AnalysisResults = () => {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3">
-                    {analysisData.painPoints.slice(0, 3).map((point) => (
+                    {currentMeeting.pain_points?.slice(0, 3).map((point: any) => (
                       <li key={point.id} className="flex items-start">
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
@@ -204,7 +171,7 @@ const AnalysisResults = () => {
                             <Badge variant="primary">
                               {point.category.replace('_', ' ')}
                             </Badge>
-                            {renderUrgencyIndicator(point.urgency)}
+                            {renderUrgencyIndicator(point.urgency_score)}
                           </div>
                         </div>
                       </li>
@@ -222,7 +189,7 @@ const AnalysisResults = () => {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3">
-                    {analysisData.followUps.map((item) => (
+                    {currentMeeting.follow_ups?.map((item: any) => (
                       <li key={item.id} className="flex items-start">
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
@@ -250,15 +217,15 @@ const AnalysisResults = () => {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3">
-                    {analysisData.nxOpportunities.map((opp) => (
+                    {currentMeeting.nx_opportunities?.map((opp: any) => (
                       <li key={opp.id} className="flex items-start">
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                            {opp.feature}
+                            {opp.nx_feature}
                           </p>
                           <div className="mt-1 flex items-center">
                             <span className="text-xs text-gray-500 dark:text-gray-400">
-                              Confidence: {Math.round(opp.confidence * 100)}%
+                              Confidence: {Math.round(opp.confidence_score * 100)}%
                             </span>
                           </div>
                         </div>
@@ -299,7 +266,7 @@ const AnalysisResults = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {analysisData.painPoints.map((point) => (
+                    {currentMeeting.pain_points?.map((point: any) => (
                       <tr key={point.id}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                           {point.description}
@@ -310,7 +277,7 @@ const AnalysisResults = () => {
                           </Badge>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {renderUrgencyIndicator(point.urgency)}
+                          {renderUrgencyIndicator(point.urgency_score)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <Badge variant={point.status === 'active' ? 'warning' : 'success'}>
@@ -354,7 +321,7 @@ const AnalysisResults = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {analysisData.followUps.map((item) => (
+                    {currentMeeting.follow_ups?.map((item: any) => (
                       <tr key={item.id}>
                         <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                           {item.description}
@@ -387,22 +354,22 @@ const AnalysisResults = () => {
 
         {activeTab === 'opportunities' && (
           <div className="space-y-6">
-            {analysisData.nxOpportunities.map((opp) => (
+            {currentMeeting.nx_opportunities?.map((opp: any) => (
               <Card key={opp.id}>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center">
                       <Check className="mr-2" size={20} />
-                      {opp.feature}
+                      {opp.nx_feature}
                     </div>
                     <Badge variant="success">
-                      {Math.round(opp.confidence * 100)}% Confidence
+                      {Math.round(opp.confidence_score * 100)}% Confidence
                     </Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-700 dark:text-gray-300">
-                    {opp.approach}
+                    {opp.suggested_approach}
                   </p>
                   
                   {/* Related pain points section */}
@@ -411,12 +378,12 @@ const AnalysisResults = () => {
                       Addresses these pain points:
                     </h3>
                     <ul className="space-y-2">
-                      {analysisData.painPoints
-                        .slice(0, 2) // Just showing a couple for each opportunity
-                        .map((point) => (
+                      {currentMeeting.pain_points
+                        ?.filter((point: any) => point.related_nx_features?.includes(opp.nx_feature))
+                        .map((point: any) => (
                           <li key={point.id} className="flex items-start">
                             <div className="flex-shrink-0 mt-0.5">
-                              <div className="h-2 w-2 rounded-full bg-indigo-500 mr-2"></div>
+                              <div className="h-2 w-2 rounded-full bg-[#FF7B7B] mr-2"></div>
                             </div>
                             <span className="text-sm text-gray-600 dark:text-gray-400">
                               {point.description}
@@ -446,54 +413,33 @@ const AnalysisResults = () => {
                 </h3>
                 
                 <div className="space-y-4">
-                  {analysisData.history.recurring.map((issue, index) => (
+                  {currentMeeting.recurring_issues?.map((issue: any, index: number) => (
                     <div key={index} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
                           {issue.description}
                         </p>
                         <Badge variant="primary">
-                          Mentioned {issue.occurrences} times
+                          Mentioned {issue.occurrences?.length || 0} times
                         </Badge>
                       </div>
                       
                       <div className="mt-3">
                         <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                           <div 
-                            className="bg-indigo-500 h-2 rounded-full" 
-                            style={{ width: `${Math.min(issue.occurrences * 20, 100)}%` }}
+                            className="bg-[#FF7B7B] h-2 rounded-full" 
+                            style={{ width: `${Math.min((issue.occurrences?.length || 0) * 20, 100)}%` }}
                           ></div>
                         </div>
                       </div>
                     </div>
                   ))}
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
-                  Previous Meetings
-                </h3>
-                
-                <div className="space-y-4">
-                  {[
-                    { title: 'Initial Consultation', date: '2025-05-01' },
-                    { title: 'Technical Requirements Discussion', date: '2025-05-15' },
-                  ].map((meeting, index) => (
-                    <div key={index} className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-4">
-                      <div>
-                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                          {meeting.title}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {formatDate(meeting.date)}
-                        </p>
-                      </div>
-                      <Button variant="ghost" size="sm">
-                        View
-                      </Button>
-                    </div>
-                  ))}
+
+                  {(!currentMeeting.recurring_issues || currentMeeting.recurring_issues.length === 0) && (
+                    <p className="text-gray-500 dark:text-gray-400 text-center py-4">
+                      No recurring issues found for this company.
+                    </p>
+                  )}
                 </div>
               </div>
             </CardContent>
