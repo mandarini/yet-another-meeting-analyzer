@@ -9,6 +9,7 @@ interface AuthState {
   error: string | null;
   initializeAuth: () => Promise<void>;
   signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
+  signInWithGithub: () => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
 }
 
@@ -82,6 +83,39 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`
+        }
+      });
+      
+      if (error) {
+        set({ error: error.message, loading: false });
+        return { success: false, error: error.message };
+      }
+      
+      return { success: true };
+    } catch (error: any) {
+      const errorMessage = error?.message || 'An unknown error occurred';
+      set({ error: errorMessage, loading: false });
+      return { success: false, error: errorMessage };
+    }
+  },
+
+  signInWithGithub: async () => {
+    set({ loading: true, error: null });
+    
+    if (USE_MOCK_AUTH) {
+      set({ 
+        session: mockSession, 
+        user: mockUser, 
+        loading: false 
+      });
+      return { success: true };
+    }
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
         options: {
           redirectTo: `${window.location.origin}/`
         }
