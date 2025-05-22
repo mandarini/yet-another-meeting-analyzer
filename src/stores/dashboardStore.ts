@@ -7,6 +7,12 @@ interface DashboardState {
   trendingIssues: any[];
   loading: boolean;
   error: string | null;
+  stats: {
+    totalMeetings: number;
+    pendingFollowUps: number;
+    completedTasks: number;
+    opportunities: number;
+  };
   
   loadDashboardData: () => Promise<void>;
 }
@@ -17,6 +23,12 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   trendingIssues: [],
   loading: false,
   error: null,
+  stats: {
+    totalMeetings: 0,
+    pendingFollowUps: 0,
+    completedTasks: 0,
+    opportunities: 0,
+  },
   
   loadDashboardData: async () => {
     set({ loading: true, error: null });
@@ -28,14 +40,24 @@ export const useDashboardStore = create<DashboardState>((set) => ({
       // Load pending follow-ups
       const followUps = await getFollowUps('pending');
       
-      // For a real implementation, this would use an API call
-      // Here we're just simulating trending issues by extracting from meetings
+      // Calculate stats
+      const stats = {
+        totalMeetings: meetings.length,
+        pendingFollowUps: followUps.length,
+        completedTasks: meetings.reduce((sum, meeting) => 
+          sum + (meeting.follow_ups?.filter((f: any) => f.status === 'completed').length || 0), 0),
+        opportunities: meetings.reduce((sum, meeting) => 
+          sum + (meeting.nx_opportunities?.length || 0), 0),
+      };
+      
+      // Extract trending issues
       const issues = extractTrendingIssues(meetings);
       
       set({
         recentMeetings: meetings,
         pendingFollowUps: followUps,
         trendingIssues: issues,
+        stats,
         loading: false
       });
     } catch (error: any) {
@@ -49,8 +71,13 @@ export const useDashboardStore = create<DashboardState>((set) => ({
 
 // Helper function to extract trending issues
 function extractTrendingIssues(meetings: any[]) {
-  // This is a simplified example
-  const issuesMap: Record<string, { count: number, urgency: number, category: string }> = {};
+  const issuesMap: Record<string, { 
+    description: string;
+    count: number;
+    urgency: number;
+    category: string;
+    lastMentioned: string;
+  }> = {};
   
   meetings.forEach(meeting => {
     const painPoints = meeting.pain_points || [];
@@ -61,24 +88,34 @@ function extractTrendingIssues(meetings: any[]) {
       if (issuesMap[key]) {
         issuesMap[key].count += 1;
         issuesMap[key].urgency = Math.max(issuesMap[key].urgency, point.urgency_score);
+        if (meeting.date > issuesMap[key].lastMentioned) {
+          issuesMap[key].lastMentioned = meeting.date;
+        }
       } else {
         issuesMap[key] = {
+          description: point.description,
           count: 1,
           urgency: point.urgency_score,
-          category: point.category
+          category: point.category,
+          lastMentioned: meeting.date
         };
       }
     });
   });
   
-  // Convert to array and sort by count and urgency
-  return Object.entries(issuesMap)
-    .map(([description, data]) => ({
-      description,
-      count: data.count,
-      urgency: data.urgency,
-      category: data.category
-    }))
-    .sort((a, b) => (b.count * b.urgency) - (a.count * a.urgency))
+  // Convert to array and sort by recency, count, and urgency
+  return Object.values(issuesMap)
+    .sort((a, b) => {
+      // First sort by count
+      const countDiff = b.count - a.count;
+      if (countDiff !== 0) return countDiff;
+      
+      // Then by urgency
+      const urgencyDiff = b.urgency - a.urgency;
+      if (urgencyDiff !== 0) return urgencyDiff;
+      
+      // Finally by date
+      return new Date(b.lastMentioned).getTime() - new Date(a.lastMentioned).getTime();
+    })
     .slice(0, 5); // Top 5 issues
 }

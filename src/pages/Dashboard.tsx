@@ -15,21 +15,12 @@ import {
   TrendingUp,
 } from 'lucide-react';
 
-// Chart data
-const chartData = [
-  { name: 'Jan', painPoints: 12, followUps: 8 },
-  { name: 'Feb', painPoints: 19, followUps: 11 },
-  { name: 'Mar', painPoints: 15, followUps: 13 },
-  { name: 'Apr', painPoints: 17, followUps: 9 },
-  { name: 'May', painPoints: 14, followUps: 7 },
-  { name: 'Jun', painPoints: 10, followUps: 5 },
-];
-
 const Dashboard = () => {
   const { 
     recentMeetings, 
     pendingFollowUps, 
-    trendingIssues, 
+    trendingIssues,
+    stats,
     loading, 
     error, 
     loadDashboardData 
@@ -93,7 +84,7 @@ const Dashboard = () => {
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Meetings</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">24</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalMeetings}</p>
               </div>
               <div className="p-2 bg-indigo-100 dark:bg-indigo-900 rounded-md">
                 <FileText className="h-6 w-6 text-indigo-500 dark:text-indigo-400" />
@@ -107,7 +98,7 @@ const Dashboard = () => {
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Pending Follow-ups</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">8</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.pendingFollowUps}</p>
               </div>
               <div className="p-2 bg-teal-100 dark:bg-teal-900 rounded-md">
                 <Clock className="h-6 w-6 text-teal-500 dark:text-teal-400" />
@@ -121,7 +112,7 @@ const Dashboard = () => {
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Completed Tasks</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">16</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.completedTasks}</p>
               </div>
               <div className="p-2 bg-green-100 dark:bg-green-900 rounded-md">
                 <CheckCircle2 className="h-6 w-6 text-green-500 dark:text-green-400" />
@@ -135,7 +126,7 @@ const Dashboard = () => {
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Identified Opportunities</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">12</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.opportunities}</p>
               </div>
               <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-md">
                 <TrendingUp className="h-6 w-6 text-orange-500 dark:text-orange-400" />
@@ -152,14 +143,18 @@ const Dashboard = () => {
           <CardHeader>
             <CardTitle className="flex items-center">
               <BarChart2 className="mr-2" size={20} />
-              Tracking Over Time
+              Activity Over Time
             </CardTitle>
           </CardHeader>
           <CardContent className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
+              <LineChart data={recentMeetings.map(meeting => ({
+                date: formatDate(meeting.date),
+                painPoints: meeting.pain_points?.length || 0,
+                followUps: meeting.follow_ups?.length || 0,
+              }))}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
+                <XAxis dataKey="date" />
                 <YAxis />
                 <Tooltip />
                 <Line 
@@ -191,13 +186,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {/* Mocking trending issues since we don't have real data yet */}
-              {[
-                { description: 'Build performance degradation', category: 'build_performance', urgency: 8 },
-                { description: 'Developer onboarding challenges', category: 'developer_experience', urgency: 7 },
-                { description: 'CI pipeline timeouts', category: 'ci_cd_issues', urgency: 6 },
-                { description: 'Scaling issues with large repos', category: 'scaling_challenges', urgency: 9 },
-              ].map((issue, index) => (
+              {trendingIssues.map((issue, index) => (
                 <div key={index} className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-start">
@@ -212,12 +201,21 @@ const Dashboard = () => {
                           <Badge variant={getCategoryBadge(issue.category)}>
                             {issue.category.replace('_', ' ')}
                           </Badge>
+                          <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                            Mentioned {issue.count} times
+                          </span>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
               ))}
+
+              {trendingIssues.length === 0 && (
+                <p className="text-center text-gray-500 dark:text-gray-400 py-4">
+                  No trending issues found
+                </p>
+              )}
             </div>
           </CardContent>
           <CardFooter>
@@ -242,12 +240,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {/* Mocking recent meetings since we don't have real data yet */}
-              {[
-                { id: '1', title: 'Acme Inc. Technical Review', date: '2025-06-10', company: 'Acme Inc.' },
-                { id: '2', title: 'Globex Corp. Initial Consultation', date: '2025-06-08', company: 'Globex Corp.' },
-                { id: '3', title: 'Initech Follow-up', date: '2025-06-05', company: 'Initech' },
-              ].map((meeting) => (
+              {recentMeetings.map((meeting) => (
                 <div key={meeting.id} className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
@@ -255,7 +248,7 @@ const Dashboard = () => {
                     </p>
                     <div className="flex items-center mt-1">
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {formatDate(meeting.date)} • {meeting.company}
+                        {formatDate(meeting.date)} • {meeting.companies?.name}
                       </p>
                     </div>
                   </div>
@@ -266,6 +259,12 @@ const Dashboard = () => {
                   </Link>
                 </div>
               ))}
+
+              {recentMeetings.length === 0 && (
+                <p className="text-center text-gray-500 dark:text-gray-400 py-4">
+                  No recent meetings found
+                </p>
+              )}
             </div>
           </CardContent>
           <CardFooter>
@@ -287,12 +286,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {/* Mocking follow-ups since we don't have real data yet */}
-              {[
-                { id: '1', description: 'Send build optimization examples', deadline: '2025-06-12', company: 'Acme Inc.' },
-                { id: '2', description: 'Schedule technical deep dive on caching', deadline: '2025-06-15', company: 'Globex Corp.' },
-                { id: '3', description: 'Share documentation on distributed builds', deadline: '2025-06-11', company: 'Initech' },
-              ].map((followUp) => (
+              {pendingFollowUps.map((followUp) => (
                 <div key={followUp.id} className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
@@ -301,7 +295,7 @@ const Dashboard = () => {
                     <div className="flex items-center mt-1">
                       <Clock size={12} className="text-gray-500 dark:text-gray-400 mr-1" />
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Due {formatDate(followUp.deadline)} • {followUp.company}
+                        Due {formatDate(followUp.deadline)} • {followUp.meetings?.companies?.name}
                       </p>
                     </div>
                   </div>
@@ -310,6 +304,12 @@ const Dashboard = () => {
                   </Button>
                 </div>
               ))}
+
+              {pendingFollowUps.length === 0 && (
+                <p className="text-center text-gray-500 dark:text-gray-400 py-4">
+                  No pending follow-ups
+                </p>
+              )}
             </div>
           </CardContent>
           <CardFooter>
