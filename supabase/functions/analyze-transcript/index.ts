@@ -8,12 +8,11 @@ interface TranscriptInput {
   meetingTitle?: string;
   meetingPurpose?: string;
   userId: string;
+  companyName: string;
 }
 
 interface AnalysisResults {
   metadata: {
-    companyName: string;
-    companyDomain?: string;
     participantNames: string[];
     detectedTopics: string[];
   };
@@ -60,30 +59,28 @@ async function processTranscript(transcript: string): Promise<AnalysisResults> {
     apiKey: openaiApiKey,
   });
 
-  // Process transcript with OpenAI
-const response = await openai.chat.completions.create({
-  model: 'gpt-4',
-  messages: [
-    {
-      role: 'system',
-      content: `You are an expert at analyzing meeting transcripts and extracting structured information. Focus on identifying:
-        1. Company and participant information
-        2. Technical pain points with urgency scoring
-        3. Follow-up commitments with deadlines
-        4. Nx-specific opportunities
-        
-        Format the output as a structured JSON object matching the AnalysisResults interface.`
-    },
-    {
-      role: 'user',
-      content: transcript
-    }
-  ],
-  temperature: 0.2,
-});
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4',
+    messages: [
+      {
+        role: 'system',
+        content: `You are an expert at analyzing meeting transcripts and extracting structured information. Focus on identifying:
+          1. Participant information
+          2. Technical pain points with urgency scoring
+          3. Follow-up commitments with deadlines
+          4. Nx-specific opportunities
+          
+          Format the output as a structured JSON object matching the AnalysisResults interface.`
+      },
+      {
+        role: 'user',
+        content: transcript
+      }
+    ],
+    temperature: 0.2,
+  });
 
-  // Parse and validate the response
-const results = JSON.parse(response.choices[0].message.content) as AnalysisResults;
+  const results = JSON.parse(response.choices[0].message.content) as AnalysisResults;
   return results;
 }
 
@@ -129,7 +126,6 @@ async function findSimilarPainPoints(
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -146,7 +142,11 @@ Deno.serve(async (req) => {
 
     // Parse request body
     const input: TranscriptInput = await req.json();
-    const { transcript, meetingDate, meetingTitle, meetingPurpose, userId } = input;
+    const { transcript, meetingDate, meetingTitle, meetingPurpose, userId, companyName } = input;
+
+    if (!companyName) {
+      throw new Error('Company name is required');
+    }
 
     // Process transcript
     const analysisResults = await processTranscript(transcript);
@@ -154,12 +154,11 @@ Deno.serve(async (req) => {
     // Generate embeddings for pain points
     const embeddings = await generateEmbeddings(analysisResults.painPoints);
 
-    // Start a database transaction
+    // Create or update company
     const { data: company } = await supabase
       .from('companies')
       .upsert({
-        name: analysisResults.metadata.companyName,
-        domain: analysisResults.metadata.companyDomain,
+        name: companyName,
       })
       .select()
       .single();
@@ -173,9 +172,10 @@ Deno.serve(async (req) => {
       .insert({
         id: meetingId,
         date: meetingDate,
-        title: meetingTitle || `Meeting with ${analysisResults.metadata.companyName}`,
+        title: meetingTitle || `Meeting with ${companyName}`,
         company_id: company.id,
         participants: analysisResults.metadata.participantNames,
+        transcript_raw: transcript,
         transcript_processed: {
           topics: analysisResults.metadata.detectedTopics,
           summary: analysisResults.executiveSummary,
@@ -199,7 +199,7 @@ Deno.serve(async (req) => {
         .select()
         .single();
 
-      if (painPoint) {
+      if (painPoint && embeddings[index]) {
         // Find similar pain points
         const similarPoints = await findSimilarPainPoints(
           supabase,
@@ -255,7 +255,7 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         meetingId,
-        companyName: company.name,
+        companyName,
         analysisResults,
       }),
       {
