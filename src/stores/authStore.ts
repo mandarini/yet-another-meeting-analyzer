@@ -13,24 +13,6 @@ interface AuthState {
   signOut: () => Promise<void>;
 }
 
-// Mock user data for development
-const mockUser = {
-  id: '123',
-  email: 'demo@example.com',
-  user_metadata: {
-    full_name: 'Demo User',
-    avatar_url: null
-  }
-};
-
-const mockSession = {
-  access_token: 'mock_token',
-  refresh_token: 'mock_refresh',
-  user: mockUser
-} as Session;
-
-const USE_MOCK_AUTH = import.meta.env.VITE_USE_MOCK_AUTH === 'true';
-
 export const useAuthStore = create<AuthState>((set, get) => ({
   session: null,
   user: null,
@@ -40,15 +22,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initializeAuth: async () => {
     set({ loading: true });
     
-    if (USE_MOCK_AUTH) {
-      set({ 
-        session: mockSession, 
-        user: mockUser, 
-        loading: false 
-      });
-      return;
-    }
-
     try {
       const { data: { session } } = await supabase.auth.getSession();
       set({ session, user: session?.user ?? null, loading: false });
@@ -70,15 +43,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signInWithGoogle: async () => {
     set({ loading: true, error: null });
-    
-    if (USE_MOCK_AUTH) {
-      set({ 
-        session: mockSession, 
-        user: mockUser, 
-        loading: false 
-      });
-      return { success: true };
-    }
     
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -104,15 +68,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signInWithGithub: async () => {
     set({ loading: true, error: null });
     
-    if (USE_MOCK_AUTH) {
-      set({ 
-        session: mockSession, 
-        user: mockUser, 
-        loading: false 
-      });
-      return { success: true };
-    }
-    
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
@@ -136,11 +91,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signOut: async () => {
     set({ loading: true });
-    
-    if (USE_MOCK_AUTH) {
-      set({ session: null, user: null, loading: false });
-      return;
-    }
     
     try {
       await supabase.auth.signOut();

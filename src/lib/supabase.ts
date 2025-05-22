@@ -4,86 +4,11 @@ import type { Database } from '../types/supabase';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// For development, if env vars aren't set, return a mock client
-const createMockClient = () => {
-  console.warn('Using mock Supabase client. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY for real data.');
-  
-  // Mock data that matches our schema
-  const mockMeetings = [
-    {
-      id: '1',
-      date: new Date().toISOString(),
-      title: 'Mock Technical Review',
-      company_id: '1',
-      participants: ['John Doe', 'Jane Smith'],
-      transcript_raw: 'Mock transcript',
-      transcript_processed: {},
-      created_by: '123',
-      companies: {
-        id: '1',
-        name: 'Acme Inc.',
-        domain: 'acme.com',
-        nx_usage_level: 'evaluating'
-      },
-      pain_points: [
-        {
-          id: '1',
-          description: 'Build times are slow',
-          severity: 8
-        }
-      ],
-      follow_ups: [
-        {
-          id: '1',
-          description: 'Send documentation',
-          deadline: new Date().toISOString(),
-          status: 'pending'
-        }
-      ],
-      nx_opportunities: [
-        {
-          id: '1',
-          description: 'Implement caching',
-          potential_value: 'high'
-        }
-      ]
-    }
-  ];
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables');
+}
 
-  return {
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          single: async () => ({ data: mockMeetings[0], error: null }),
-          order: () => ({
-            limit: async () => ({ data: mockMeetings, error: null })
-          }),
-        }),
-        order: () => ({
-          limit: async () => ({ data: mockMeetings, error: null })
-        }),
-      }),
-      insert: () => ({
-        select: () => ({
-          single: async () => ({ data: mockMeetings[0], error: null })
-        })
-      }),
-      update: () => ({
-        eq: async () => ({ error: null })
-      })
-    }),
-    auth: {
-      getSession: async () => ({ data: { session: null }, error: null }),
-      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } }, error: null }),
-      signInWithOAuth: async () => ({ data: null, error: null }),
-      signOut: async () => ({ error: null })
-    }
-  };
-};
-
-export const supabase = supabaseUrl && supabaseAnonKey
-  ? createClient<Database>(supabaseUrl, supabaseAnonKey)
-  : createMockClient() as any;
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 export const getProfile = async (userId: string) => {
   const { data, error } = await supabase
