@@ -47,7 +47,7 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-async function processTranscript(transcript: string): Promise<AnalysisResults> {
+async function processTranscript(transcript: string, purpose?: string): Promise<AnalysisResults> {
   const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
   if (!openaiApiKey) {
     throw new Error('Missing OpenAI API key');
@@ -57,64 +57,95 @@ async function processTranscript(transcript: string): Promise<AnalysisResults> {
     apiKey: openaiApiKey,
   });
 
+  const systemPrompt = `You are an expert at analyzing technical meeting transcripts, specifically focusing on development and engineering challenges that could be addressed by Nx. Your task is to:
+
+1. Identify Technical Pain Points:
+   - Focus on build/CI problems, monorepo challenges, dependency management issues
+   - Look for mentions of slow builds, CI pipeline issues, code sharing difficulties
+   - Rate urgency based on frequency of mention and impact on development
+   - Categorize into: build_performance, ci_cd_issues, dependency_management, developer_experience, scaling_challenges
+
+2. Extract Specific Follow-up Items:
+   - Only include concrete, actionable items that were explicitly agreed upon
+   - Set realistic deadlines based on conversation context
+   - Include any mentioned assignees
+
+3. Identify Nx Opportunities:
+   - Match pain points to specific Nx features that could help
+   - Only suggest features with high confidence of addressing the mentioned problems
+   - Provide practical implementation approaches
+
+4. Identify Participants:
+   - Extract names and roles from the conversation
+   - Include only people who actively participated
+
+5. Create Executive Summary:
+   - Focus on technical challenges and potential solutions
+   - Highlight most urgent pain points
+   - Summarize key decisions and next steps
+
+Format the output as a structured JSON object with the following schema:
+{
+  "topics": string[], // 3-5 main technical topics discussed
+  "painPoints": [{
+    "description": string, // Specific technical challenge
+    "urgencyScore": number, // 1-10 scale
+    "category": string, // One of the categories listed above
+    "relatedNxFeatures": string[] // Relevant Nx features
+  }],
+  "followUps": [{
+    "description": string, // Specific action item
+    "deadline": string, // ISO date string
+    "assignedTo": string // Person responsible
+  }],
+  "nxOpportunities": [{
+    "feature": string, // Specific Nx feature
+    "confidenceScore": number, // 0-1 scale
+    "suggestedApproach": string // Implementation strategy
+  }],
+  "executiveSummary": string,
+  "participants": string[]
+}
+
+Only include items that are explicitly mentioned or strongly implied by the conversation. Do not make assumptions or add speculative items.`;
+
   const response = await openai.chat.completions.create({
     model: 'gpt-4',
     messages: [
       {
         role: 'system',
-        content: `You are an expert at analyzing meeting transcripts and extracting structured information. Focus on identifying:
-          1. Main discussion topics
-          2. Participant names and roles from the conversation context
-          3. Technical pain points with urgency scoring
-          4. Follow-up commitments with deadlines
-          5. Nx-specific opportunities
-          
-          Format the output as a structured JSON object with the following structure:
-          {
-            "topics": string[],
-            "painPoints": Array<{
-              "description": string,
-              "urgencyScore": number,
-              "category": string,
-              "relatedNxFeatures"?: string[]
-            }>,
-            "followUps": Array<{
-              "description": string,
-              "deadline": string,
-              "assignedTo"?: string
-            }>,
-            "nxOpportunities": Array<{
-              "feature": string,
-              "confidenceScore": number,
-              "suggestedApproach": string
-            }>,
-            "executiveSummary": string,
-            "participants": string[]
-          }
-
-          For participants, extract them from the conversation flow and context.
-          For topics, identify 3-5 main themes discussed in the meeting.
-          Ensure all arrays are initialized even if empty.`
+        content: systemPrompt
       },
       {
         role: 'user',
-        content: transcript
+        content: `Meeting Purpose: ${purpose || 'Technical Discussion'}\n\nTranscript:\n${transcript}`
       }
     ],
-    temperature: 0.2,
+    temperature: 0.1, // Lower temperature for more focused results
   });
 
   const results = JSON.parse(response.choices[0].message.content);
   
-  // Ensure all required arrays exist
+  // Ensure all required arrays exist and validate data
   return {
-    topics: results.topics || [],
-    painPoints: results.painPoints || [],
-    followUps: results.followUps || [],
-    nxOpportunities: results.nxOpportunities || [],
-    recurringIssues: results.recurringIssues || [],
+    topics: Array.isArray(results.topics) ? results.topics : [],
+    painPoints: Array.isArray(results.painPoints) ? results.painPoints.filter(p => 
+      p.description && 
+      typeof p.urgencyScore === 'number' && 
+      p.category
+    ) : [],
+    followUps: Array.isArray(results.followUps) ? results.followUps.filter(f => 
+      f.description && 
+      f.deadline
+    ) : [],
+    nxOpportunities: Array.isArray(results.nxOpportunities) ? results.nxOpportunities.filter(o => 
+      o.feature && 
+      typeof o.confidenceScore === 'number' && 
+      o.suggestedApproach
+    ) : [],
+    recurringIssues: Array.isArray(results.recurringIssues) ? results.recurringIssues : [],
     executiveSummary: results.executiveSummary || '',
-    participants: results.participants || []
+    participants: Array.isArray(results.participants) ? results.participants : []
   };
 }
 
