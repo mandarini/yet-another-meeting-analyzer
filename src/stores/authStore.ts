@@ -29,7 +29,7 @@ const mockSession = {
   user: mockUser
 } as Session;
 
-const USE_MOCK_AUTH = !import.meta.env.VITE_SUPABASE_URL || true;
+const USE_MOCK_AUTH = !import.meta.env.VITE_SUPABASE_URL;
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   session: null,
