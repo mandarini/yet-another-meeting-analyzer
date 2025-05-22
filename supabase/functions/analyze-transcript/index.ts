@@ -154,16 +154,19 @@ async function findSimilarPainPoints(
   embedding: number[] | null,
   threshold = 0.85
 ) {
-  if (!embedding) return [];
+  if (!embedding || !companyId) return [];
 
   try {
     const { data, error } = await supabase.rpc('match_pain_points', {
-      query_embedding: embedding,
-      similarity_threshold: threshold,
-      company_id: companyId,
+      _company_id: companyId,
+      _query_embedding: embedding,
+      _similarity_threshold: threshold,
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error in match_pain_points:', error);
+      return [];
+    }
     return data || [];
   } catch (error) {
     console.error('Error finding similar pain points:', error);
@@ -190,23 +193,23 @@ Deno.serve(async (req) => {
     const input: TranscriptInput = await req.json();
     const { transcript, meetingDate, meetingTitle, meetingPurpose, userId, companyName } = input;
 
-    if (!companyName) {
-      throw new Error('Company name is required');
+    if (!transcript || !meetingDate || !userId || !companyName) {
+      throw new Error('Missing required fields');
     }
 
-    // Process transcript
+    // Process transcript first to get analysis results
     const analysisResults = await processTranscript(transcript);
 
-    // Create or update company
-    const { data: company } = await supabase
+    // Create or get company first to ensure we have the company ID
+    const { data: company, error: companyError } = await supabase
       .from('companies')
-      .upsert({
-        name: companyName,
-      })
+      .upsert({ name: companyName })
       .select()
       .single();
 
-    if (!company) throw new Error('Failed to create/update company');
+    if (companyError || !company) {
+      throw new Error('Failed to create/get company');
+    }
 
     // Create meeting record
     const meetingId = uuidv4();
@@ -231,10 +234,11 @@ Deno.serve(async (req) => {
     // Generate embeddings for pain points
     const embeddings = await generateEmbeddings(analysisResults.painPoints);
 
-    // Store pain points with embeddings
+    // Store pain points and process recurring issues
     const painPointPromises = analysisResults.painPoints.map(async (point, index) => {
       try {
-        const { data: painPoint } = await supabase
+        // Insert pain point first
+        const { data: painPoint, error: painPointError } = await supabase
           .from('pain_points')
           .insert({
             meeting_id: meetingId,
@@ -242,18 +246,23 @@ Deno.serve(async (req) => {
             urgency_score: point.urgencyScore,
             category: point.category,
             related_nx_features: point.relatedNxFeatures,
+            embedding: embeddings[index],
           })
           .select()
           .single();
 
-        if (painPoint && embeddings[index]) {
+        if (painPointError) throw painPointError;
+
+        // Only check for similar points if we have both the embedding and company ID
+        if (painPoint && embeddings[index] && company.id) {
           const similarPoints = await findSimilarPainPoints(
             supabase,
             company.id,
             embeddings[index]
           );
 
-          if (similarPoints.length > 0) {
+          if (similarPoints && similarPoints.length > 0) {
+            // Create or update recurring issue
             await supabase.from('recurring_issues').upsert({
               company_id: company.id,
               description: point.description,
@@ -274,17 +283,17 @@ Deno.serve(async (req) => {
     });
 
     // Store follow-ups
-    const followUpPromises = (analysisResults.followUps || []).map((followUp) =>
+    const followUpPromises = analysisResults.followUps.map((followUp) =>
       supabase.from('follow_ups').insert({
         meeting_id: meetingId,
         description: followUp.description,
         deadline: followUp.deadline,
-        assigned_to: followUp.assignedTo,
+        assigned_to: userId, // Assign to the meeting creator by default
       })
     );
 
     // Store Nx opportunities
-    const opportunityPromises = (analysisResults.nxOpportunities || []).map((opportunity) =>
+    const opportunityPromises = analysisResults.nxOpportunities.map((opportunity) =>
       supabase.from('nx_opportunities').insert({
         meeting_id: meetingId,
         nx_feature: opportunity.feature,
@@ -305,6 +314,7 @@ Deno.serve(async (req) => {
         success: true,
         data: {
           meetingId,
+          companyId: company.id,
           companyName,
           analysisResults,
         }
