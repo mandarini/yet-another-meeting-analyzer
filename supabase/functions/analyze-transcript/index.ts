@@ -55,6 +55,8 @@ async function processTranscript(transcript: string, purpose?: string): Promise<
 
   const openai = new OpenAI({
     apiKey: openaiApiKey,
+    timeout: 300000, // 5 minute timeout
+    maxRetries: 5,   // Retry up to 5 times
   });
 
   const systemPrompt = `You are an expert at analyzing technical meeting transcripts, specifically focusing on development and engineering challenges that could be addressed by Nx. Your task is to:
