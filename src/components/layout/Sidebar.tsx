@@ -33,7 +33,7 @@ const Sidebar = ({ closeSidebar }: SidebarProps) => {
     <div className="h-full flex flex-col py-4">
       <div className="px-4 flex items-center justify-between md:justify-center">
         <div className="flex items-center">
-          <img src="/src/assets/yama-face.png" alt="Yama" className="h-8 w-8 mr-2" />
+          <img src="/assets/yama-face.png" alt="Yama" className="h-8 w-8 mr-2" />
           <span className="font-bold text-xl text-[#FF7B7B] dark:text-[#FF9B9B]">
             Yama
           </span>

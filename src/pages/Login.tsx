@@ -22,7 +22,7 @@ const Login = () => {
         <div className="text-center">
           <div className="flex flex-col items-center mb-6">
             <img 
-              src="/src/assets/yama-io.png"
+              src="/assets/yama-io.png"
               alt="Yama Logo" 
               className="w-48 h-48 object-contain mb-4" 
             />
