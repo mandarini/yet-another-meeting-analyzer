@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.39.7';
 import { v4 as uuidv4 } from 'npm:uuid@9.0.1';
+import OpenAI from 'npm:openai@4.28.0';
 
 interface TranscriptInput {
   transcript: string;
@@ -50,37 +51,61 @@ const corsHeaders = {
 };
 
 async function processTranscript(transcript: string): Promise<AnalysisResults> {
-  // Initialize OpenAI client
-  const openai = new Supabase.ai.Session('gpt-4');
+  const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+  if (!openaiApiKey) {
+    throw new Error('Missing OpenAI API key');
+  }
+
+  const openai = new OpenAI({
+    apiKey: openaiApiKey,
+  });
 
   // Process transcript with OpenAI
-  const response = await openai.run(transcript, {
-    system_prompt: `You are an expert at analyzing meeting transcripts and extracting structured information. Focus on identifying:
-      1. Company and participant information
-      2. Technical pain points with urgency scoring
-      3. Follow-up commitments with deadlines
-      4. Nx-specific opportunities
-      
-      Format the output as a structured JSON object matching the AnalysisResults interface.`,
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4',
+    messages: [
+      {
+        role: 'system',
+        content: `You are an expert at analyzing meeting transcripts and extracting structured information. Focus on identifying:
+          1. Company and participant information
+          2. Technical pain points with urgency scoring
+          3. Follow-up commitments with deadlines
+          4. Nx-specific opportunities
+          
+          Format the output as a structured JSON object matching the AnalysisResults interface.`
+      },
+      {
+        role: 'user',
+        content: transcript
+      }
+    ],
     temperature: 0.2,
     max_tokens: 2000,
+    response_format: { type: 'json_object' }
   });
 
   // Parse and validate the response
-  const results = JSON.parse(response) as AnalysisResults;
+  const results = JSON.parse(response.choices[0].message.content) as AnalysisResults;
   return results;
 }
 
 async function generateEmbeddings(painPoints: AnalysisResults['painPoints']) {
-  const embeddings = new Supabase.ai.Session('text-embedding-ada-002');
+  const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+  if (!openaiApiKey) {
+    throw new Error('Missing OpenAI API key');
+  }
+
+  const openai = new OpenAI({
+    apiKey: openaiApiKey,
+  });
   
   return Promise.all(
     painPoints.map(async (point) => {
-      const embedding = await embeddings.run(point.description, {
-        mean_pool: true,
-        normalize: true,
+      const response = await openai.embeddings.create({
+        model: 'text-embedding-ada-002',
+        input: point.description,
       });
-      return embedding;
+      return response.data[0].embedding;
     })
   );
 }
