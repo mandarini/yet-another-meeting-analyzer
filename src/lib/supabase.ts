@@ -161,46 +161,39 @@ export const updateFollowUpStatus = async (id: string, status: string) => {
 };
 
 export const submitTranscript = async (transcriptData: any) => {
-  // First check if the company exists
-  const { data: company } = await supabase
-    .from('companies')
-    .select('id')
-    .eq('id', transcriptData.companyId)
-    .single();
+  try {
+    // Call the analyze-transcript Edge Function
+    const response = await fetch(
+      `${supabaseUrl}/functions/v1/analyze-transcript`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({
+          transcript: transcriptData.transcriptText,
+          meetingDate: transcriptData.date,
+          meetingTitle: transcriptData.title,
+          meetingPurpose: transcriptData.purpose,
+          userId: transcriptData.userId,
+        }),
+      }
+    );
 
-  if (!company) {
-    console.error('Company not found');
-    return null;
-  }
+    if (!response.ok) {
+      throw new Error('Failed to analyze transcript');
+    }
 
-  // Then insert the meeting
-  const { data, error } = await supabase
-    .from('meetings')
-    .insert([{
-      date: transcriptData.date,
-      title: transcriptData.title,
-      company_id: transcriptData.companyId,
-      participants: transcriptData.participants,
-      transcript_raw: transcriptData.transcriptText,
-      transcript_processed: {}, // This would be filled by the Edge Function
-      created_by: transcriptData.userId
-    }])
-    .select(`
-      id,
-      date,
-      title,
-      company_id,
-      participants,
-      transcript_raw,
-      transcript_processed,
-      created_by
-    `)
-    .single();
+    const result = await response.json();
+    
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to process transcript');
+    }
 
-  if (error) {
+    return result.data;
+  } catch (error: any) {
     console.error('Error submitting transcript:', error);
-    return null;
+    throw error;
   }
-
-  return data;
 };
