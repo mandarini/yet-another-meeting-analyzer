@@ -11,18 +11,10 @@ import { FileText, SendHorizonal, Loader } from 'lucide-react';
 interface TranscriptFormData {
   title: string;
   date: string;
-  companyId: string;
+  companyName: string;
   purpose: string;
   transcriptText: string;
 }
-
-// Mock company data - in a real app, this would come from Supabase
-const COMPANY_OPTIONS = [
-  { value: '1', label: 'Acme Inc.' },
-  { value: '2', label: 'Globex Corporation' },
-  { value: '3', label: 'Initech' },
-  { value: '4', label: 'Massive Dynamic' },
-];
 
 const MEETING_PURPOSE_OPTIONS = [
   { value: 'initial_consultation', label: 'Initial Consultation' },
@@ -94,11 +86,11 @@ const TranscriptForm = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select
-              label="Company"
-              options={COMPANY_OPTIONS}
-              {...register('companyId', { required: 'Company is required' })}
-              error={errors.companyId?.message}
+            <Input
+              label="Company Name"
+              placeholder="Enter company name"
+              {...register('companyName', { required: 'Company name is required' })}
+              error={errors.companyName?.message}
             />
             
             <Select
