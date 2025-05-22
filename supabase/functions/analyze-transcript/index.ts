@@ -83,7 +83,7 @@ const response = await openai.chat.completions.create({
 });
 
   // Parse and validate the response
-  const results = JSON.parse(response.choices[0].message.content) as AnalysisResults;
+const results = JSON.parse(response.choices[0].message.content) as AnalysisResults;
   return results;
 }
 
