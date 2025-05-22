@@ -15,11 +15,21 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <div className="flex justify-center mb-4">
-            <img src="/src/assets/logo.svg" alt="Yama" className="h-16 w-16" />
+          <div className="flex flex-col items-center mb-6">
+            {/* This is a placeholder for the full logo. Replace the src when you add the actual logo */}
+            <img 
+              src="https://images.pexels.com/photos/2558605/pexels-photo-2558605.jpeg" 
+              alt="Yama Logo" 
+              className="w-48 h-48 object-contain mb-4" 
+            />
+            <h1 className="text-4xl font-bold text-[#FF7B7B] dark:text-[#FF9B9B]">Yama</h1>
+            <h2 className="mt-2 text-xl text-gray-600 dark:text-gray-300">
+              Yet Another Meeting Analyzer
+            </h2>
           </div>
-          <h1 className="text-3xl font-bold text-[#FF7B7B] dark:text-[#FF9B9B]">Yama</h1>
-          <h2 className="mt-2 text-lg text-gray-600 dark:text-gray-300">Yet Another Meeting Analyzer</h2>
+          <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+            Transform your meetings into actionable insights with AI-powered analysis
+          </p>
         </div>
         
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 md:p-8">
