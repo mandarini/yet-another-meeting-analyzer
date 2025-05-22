@@ -53,7 +53,7 @@ const TranscriptForm = () => {
       const result = await submitNewTranscript(formattedData);
       
       if (result) {
-        navigate(`/analysis/${result.id}`);
+        navigate(`/analysis/${result.meetingId}`);
       }
     }
   };
