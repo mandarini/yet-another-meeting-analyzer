@@ -44,7 +44,8 @@ export const getMeetings = async (limit = 10) => {
       pain_points (
         id,
         description,
-        severity
+        urgency_score,
+        category
       ),
       follow_ups (
         id,
@@ -54,8 +55,9 @@ export const getMeetings = async (limit = 10) => {
       ),
       nx_opportunities (
         id,
-        description,
-        potential_value
+        nx_feature,
+        confidence_score,
+        suggested_approach
       )
     `)
     .order('date', { ascending: false })
@@ -90,7 +92,8 @@ export const getMeeting = async (id: string) => {
       pain_points (
         id,
         description,
-        severity
+        urgency_score,
+        category
       ),
       follow_ups (
         id,
@@ -100,8 +103,9 @@ export const getMeeting = async (id: string) => {
       ),
       nx_opportunities (
         id,
-        description,
-        potential_value
+        nx_feature,
+        confidence_score,
+        suggested_approach
       )
     `)
     .eq('id', id)
