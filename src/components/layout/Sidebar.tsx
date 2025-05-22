@@ -32,9 +32,12 @@ const Sidebar = ({ closeSidebar }: SidebarProps) => {
   return (
     <div className="h-full flex flex-col py-4">
       <div className="px-4 flex items-center justify-between md:justify-center">
-        <span className="font-bold text-xl text-indigo-700 dark:text-indigo-400">
-          TranscriptAI
-        </span>
+        <div className="flex items-center">
+          <img src="/src/assets/logo.svg" alt="Yama" className="h-8 w-8 mr-2" />
+          <span className="font-bold text-xl text-[#FF7B7B] dark:text-[#FF9B9B]">
+            Yama
+          </span>
+        </div>
         <button 
           className="p-1 rounded-md text-gray-500 hover:bg-gray-100 md:hidden"
           onClick={closeSidebar}
@@ -54,8 +57,8 @@ const Sidebar = ({ closeSidebar }: SidebarProps) => {
                 className={({ isActive }) => 
                   `flex items-center px-4 py-2.5 text-sm font-medium transition-colors ${
                     isActive 
-                      ? 'text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20' 
-                      : 'text-gray-700 dark:text-gray-200 hover:text-indigo-700 dark:hover:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      ? 'text-[#FF7B7B] dark:text-[#FF9B9B] bg-pink-50 dark:bg-pink-900/20' 
+                      : 'text-gray-700 dark:text-gray-200 hover:text-[#FF7B7B] dark:hover:text-[#FF9B9B] hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`
                 }
                 end={item.path === '/'}
