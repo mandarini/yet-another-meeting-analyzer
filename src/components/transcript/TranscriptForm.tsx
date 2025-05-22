@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranscriptStore } from '../../stores/transcriptStore';
 import { useAuthStore } from '../../stores/authStore';
 import { Input, TextArea, Select } from '../ui/FormElements';
-import Button from '../ui/Button';
+import Button from '../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/Card';
 import { FileText, SendHorizonal, Loader } from 'lucide-react';
 
@@ -13,7 +13,6 @@ interface TranscriptFormData {
   date: string;
   companyId: string;
   purpose: string;
-  participants: string;
   transcriptText: string;
 }
 
@@ -56,7 +55,6 @@ const TranscriptForm = () => {
     if (user) {
       const formattedData = {
         ...data,
-        participants: data.participants.split(',').map(p => p.trim()),
         userId: user.id,
       };
       
@@ -110,13 +108,6 @@ const TranscriptForm = () => {
               error={errors.purpose?.message}
             />
           </div>
-          
-          <Input
-            label="Participants (comma separated)"
-            placeholder="John Doe, Jane Smith, etc."
-            {...register('participants', { required: 'Participants are required' })}
-            error={errors.participants?.message}
-          />
           
           <div>
             <TextArea
