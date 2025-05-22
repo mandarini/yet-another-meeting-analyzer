@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
-import { Clock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Clock, CheckCircle2, AlertCircle, Filter } from 'lucide-react';
 import { getFollowUps, updateFollowUpStatus } from '../lib/supabase';
 
 interface FollowUp {
@@ -23,6 +23,7 @@ const FollowUps = () => {
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
 
   useEffect(() => {
     loadFollowUps();
@@ -30,8 +31,12 @@ const FollowUps = () => {
 
   const loadFollowUps = async () => {
     try {
-      const data = await getFollowUps('pending');
-      setFollowUps(data);
+      // Load both pending and completed follow-ups
+      const [pendingData, completedData] = await Promise.all([
+        getFollowUps('pending'),
+        getFollowUps('completed')
+      ]);
+      setFollowUps([...pendingData, ...completedData]);
     } catch (err) {
       setError('Failed to load follow-ups');
     } finally {
@@ -43,7 +48,12 @@ const FollowUps = () => {
     try {
       const success = await updateFollowUpStatus(id, newStatus);
       if (success) {
-        await loadFollowUps(); // Reload the list
+        // Update the local state immediately
+        setFollowUps(followUps.map(followUp => 
+          followUp.id === id 
+            ? { ...followUp, status: newStatus }
+            : followUp
+        ));
       }
     } catch (err) {
       setError('Failed to update follow-up status');
@@ -61,6 +71,16 @@ const FollowUps = () => {
 
   const isOverdue = (deadline: string) => {
     return new Date(deadline) < new Date();
+  };
+
+  const filteredFollowUps = followUps.filter(followUp => {
+    if (filter === 'all') return true;
+    return followUp.status === filter;
+  });
+
+  const stats = {
+    pending: followUps.filter(f => f.status === 'pending').length,
+    completed: followUps.filter(f => f.status === 'completed').length,
   };
 
   if (loading) {
@@ -87,19 +107,37 @@ const FollowUps = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Follow-up Tasks</h1>
-        <div className="flex items-center space-x-2">
-          <Badge variant="warning">
-            {followUps.filter(f => f.status === 'pending').length} Pending
-          </Badge>
-          <Badge variant="success">
-            {followUps.filter(f => f.status === 'completed').length} Completed
-          </Badge>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Follow-up Tasks</h1>
+          <p className="mt-1 text-gray-600 dark:text-gray-300">
+            Track and manage your meeting follow-ups
+          </p>
+        </div>
+        
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <Badge variant="warning">
+              {stats.pending} Pending
+            </Badge>
+            <Badge variant="success">
+              {stats.completed} Completed
+            </Badge>
+          </div>
+
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value as 'all' | 'pending' | 'completed')}
+            className="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+          >
+            <option value="all">All Tasks</option>
+            <option value="pending">Pending Only</option>
+            <option value="completed">Completed Only</option>
+          </select>
         </div>
       </div>
 
       <div className="grid gap-6">
-        {followUps.map((followUp) => (
+        {filteredFollowUps.map((followUp) => (
           <Card key={followUp.id} className="overflow-hidden">
             <CardHeader className="bg-gray-50 dark:bg-gray-800">
               <CardTitle className="flex items-center justify-between">
@@ -108,9 +146,12 @@ const FollowUps = () => {
                   <span className="text-lg">{followUp.meetings.title}</span>
                 </div>
                 <Badge 
-                  variant={isOverdue(followUp.deadline) ? 'danger' : 'warning'}
+                  variant={
+                    followUp.status === 'completed' ? 'success' :
+                    isOverdue(followUp.deadline) ? 'danger' : 'warning'
+                  }
                 >
-                  Due {formatDate(followUp.deadline)}
+                  {followUp.status === 'completed' ? 'Completed' : `Due ${formatDate(followUp.deadline)}`}
                 </Badge>
               </CardTitle>
             </CardHeader>
@@ -147,15 +188,23 @@ const FollowUps = () => {
           </Card>
         ))}
 
-        {followUps.length === 0 && (
+        {filteredFollowUps.length === 0 && (
           <Card>
             <CardContent className="p-12 text-center">
               <CheckCircle2 size={48} className="text-green-500 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                All Caught Up!
+                {filter === 'all' 
+                  ? 'No Follow-up Tasks'
+                  : filter === 'pending'
+                  ? 'No Pending Tasks'
+                  : 'No Completed Tasks'}
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
-                You have no pending follow-up tasks.
+                {filter === 'all'
+                  ? 'You have no follow-up tasks.'
+                  : filter === 'pending'
+                  ? 'All caught up! No pending tasks.'
+                  : 'No completed tasks yet.'}
               </p>
             </CardContent>
           </Card>
