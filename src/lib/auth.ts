@@ -21,18 +21,16 @@ export interface UserWithRole {
 }
 
 export const getUserRole = async (userId: string): Promise<UserRole> => {
-  const { data, error } = await supabase
-    .from('user_roles')
-    .select('role_id')
-    .eq('user_id', userId)
-    .single();
+  try {
+    const { data, error } = await supabase
+      .rpc('get_user_role', { user_id: userId });
 
-  if (error) {
+    if (error) throw error;
+    return (data || 'user') as UserRole;
+  } catch (error) {
     console.error('Error fetching user role:', error);
     return 'user';
   }
-
-  return data.role_id;
 };
 
 export const hasRole = async (userId: string, roles: UserRole[]): Promise<boolean> => {
