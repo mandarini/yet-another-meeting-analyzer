@@ -455,11 +455,20 @@ Deno.serve(async (req) => {
     // Process transcript with Nx-specific analysis
     const analysisResults = await processNxTranscript(transcript, meetingPurpose);
 
+    // Try to find existing company first
+    const { data: existingCompany, error: lookupError } = await supabase
+      .from('companies')
+      .select('id, name')
+      .eq('normalized_name', companyName.toLowerCase().trim())
+      .maybeSingle();
+
     // Create or update company with extracted information
     const { data: company, error: companyError } = await supabase
       .from('companies')
       .upsert({
+        id: existingCompany?.id, // Will be undefined for new companies
         name: companyName,
+        normalized_name: companyName.toLowerCase().trim(),
         technologies_used: analysisResults.technologiesUsed,
         nx_version: analysisResults.nxVersion,
         nx_cloud_usage: analysisResults.nxCloudUsage.status,
