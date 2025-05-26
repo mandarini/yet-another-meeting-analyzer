@@ -17,7 +17,7 @@ export interface UserWithRole {
   email: string;
   role: UserRole;
   created_at: string;
-  last_sign_in: string;
+  last_sign_in_at: string | null;
 }
 
 export const getUserRole = async (userId: string): Promise<UserRole> => {
@@ -63,8 +63,11 @@ export const modifyUserRole = async (
     // Update role
     const { error: updateError } = await supabase
       .from('user_roles')
-      .update({ role_id: newRole })
-      .eq('user_id', userId);
+      .upsert({ 
+        user_id: userId,
+        role_id: newRole,
+        assigned_by: currentUserId
+      });
 
     if (updateError) {
       throw updateError;
@@ -89,28 +92,20 @@ export const modifyUserRole = async (
 };
 
 export const getAllUsers = async (): Promise<UserWithRole[]> => {
-  const { data, error } = await supabase
-    .from('auth.users')
-    .select(`
-      id,
-      email,
-      created_at,
-      last_sign_in_at,
-      user_roles (
-        role_id
-      )
-    `);
-
-  if (error) {
+  try {
+    const { data, error } = await supabase.rpc('get_all_users');
+    
+    if (error) throw error;
+    
+    return data.map(user => ({
+      id: user.id,
+      email: user.email,
+      role: user.role as UserRole,
+      created_at: user.created_at,
+      last_sign_in_at: user.last_sign_in_at
+    }));
+  } catch (error) {
     console.error('Error fetching users:', error);
     return [];
   }
-
-  return data.map((user: any) => ({
-    id: user.id,
-    email: user.email,
-    role: user.user_roles?.[0]?.role_id || 'user',
-    created_at: user.created_at,
-    last_sign_in: user.last_sign_in_at
-  }));
 };
