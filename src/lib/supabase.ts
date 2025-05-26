@@ -193,6 +193,9 @@ export const getMeeting = async (id: string) => {
 };
 
 export const getFollowUps = async (status = 'pending') => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
   const { data, error } = await supabase
     .from('follow_ups')
     .select(`
@@ -213,6 +216,7 @@ export const getFollowUps = async (status = 'pending') => {
       )
     `)
     .eq('status', status)
+    .eq('assigned_to', user.id)
     .order('deadline', { ascending: true });
 
   if (error) {

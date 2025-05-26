@@ -556,14 +556,27 @@ Deno.serve(async (req) => {
     });
 
     // Store follow-ups
-    const followUpPromises = analysisResults.followUps.map((followUp) =>
-      supabase.from('follow_ups').insert({
-        meeting_id: meetingId,
-        description: followUp.description,
-        deadline: followUp.deadline,
-        assigned_to: followUp.assignedTo || userId,
-      })
-    );
+    const followUpPromises = analysisResults.followUps.map(async (followUp) => {
+      try {
+        const { error: followUpError } = await supabase
+          .from('follow_ups')
+          .insert({
+            meeting_id: meetingId,
+            description: followUp.description,
+            deadline: followUp.deadline,
+            assigned_to: followUp.assignedTo || userId,
+            status: 'pending'
+          });
+        
+        if (followUpError) {
+          console.error('Error storing follow-up:', followUpError);
+          throw followUpError;
+        }
+      } catch (error) {
+        console.error('Error in follow-up promise:', error);
+        throw error;
+      }
+    });
 
     // Wait for pain points to be stored
     await Promise.all(painPointPromises);
@@ -579,8 +592,13 @@ Deno.serve(async (req) => {
     // Update analysis results with global insights
     analysisResults.globalInsights = globalInsights;
 
-    // Complete follow-up operations
-    await Promise.all(followUpPromises);
+    // Wait for follow-ups to be stored before sending response
+    try {
+      await Promise.all(followUpPromises);
+    } catch (error) {
+      console.error('Error storing follow-ups:', error);
+      throw new Error('Failed to store follow-ups');
+    }
 
     return new Response(
       JSON.stringify({
