@@ -47,9 +47,12 @@ const HistoricalData = () => {
 
   const loadMeetings = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const data = await getMeetings(50); // Get more meetings for historical view
       setMeetings(data);
     } catch (err) {
+      console.error('Error loading meetings:', err);
       setError('Failed to load historical data');
     } finally {
       setLoading(false);
@@ -101,7 +104,10 @@ const HistoricalData = () => {
       <div className="flex flex-col items-center justify-center h-64">
         <AlertCircle size={48} className="text-red-500 mb-4" />
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Error Loading Data</h2>
-        <p className="text-gray-600 dark:text-gray-300">{error}</p>
+        <p className="text-gray-600 dark:text-gray-300 mb-4">{error}</p>
+        <Button onClick={loadMeetings}>
+          Try Again
+        </Button>
       </div>
     );
   }
@@ -256,6 +262,12 @@ const HistoricalData = () => {
                     </div>
                   </div>
                 ))}
+
+              {filteredMeetings.length === 0 && (
+                <p className="text-center text-gray-500 dark:text-gray-400 py-4">
+                  No data available
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
