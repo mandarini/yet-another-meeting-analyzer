@@ -66,6 +66,11 @@ const AdminDashboard = () => {
     return variants[role];
   };
 
+  const formatDate = (date: string | null) => {
+    if (!date) return 'Never';
+    return new Date(date).toLocaleString();
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -172,12 +177,10 @@ const AdminDashboard = () => {
                       </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {new Date(user.created_at).toLocaleDateString()}
+                      {formatDate(user.created_at)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {user.last_sign_in
-                        ? new Date(user.last_sign_in).toLocaleDateString()
-                        : 'Never'}
+                      {formatDate(user.last_sign_in_at)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <select
