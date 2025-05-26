@@ -167,10 +167,16 @@ const TranscriptForm = () => {
             
             <Select
               label="Meeting Purpose"
-              options={MEETING_PURPOSE_OPTIONS}
               {...register('purpose', { required: 'Purpose is required' })}
               error={errors.purpose?.message}
-            />
+            >
+              <option value="">Select purpose</option>
+              {MEETING_PURPOSE_OPTIONS.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
           </div>
           
           <div>
