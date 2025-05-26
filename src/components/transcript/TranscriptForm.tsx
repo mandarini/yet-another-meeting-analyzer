@@ -6,7 +6,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { Input, TextArea, Select } from '../ui/FormElements';
 import Button from '../ui/Button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/Card';
-import { FileText, SendHorizonal, Loader, Plus } from 'lucide-react';
+import { FileText, SendHorizonal, Loader } from 'lucide-react';
 import { getCompanies } from '../../lib/supabase';
 
 interface TranscriptFormData {
@@ -107,9 +107,9 @@ const TranscriptForm = () => {
       const result = await submitNewTranscript(formattedData);
       
       if (result?.meetingId) {
-        // Wait a moment for the data to be saved
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        navigate(`/analysis/${result.meetingId}`);
+        // Wait for the data to be saved before navigating
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        navigate(`/analysis/${result.meetingId}`, { replace: true });
       }
     } catch (error) {
       console.error('Error submitting transcript:', error);
