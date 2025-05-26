@@ -34,10 +34,44 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ session: null, user: null, userRole: null, loading: false });
       }
 
-      supabase.auth.onAuthStateChange(async (_event, session) => {
+      supabase.auth.onAuthStateChange(async (event, session) => {
         if (session?.user) {
-          const role = await getUserRole(session.user.id);
-          set({ session, user: session.user, userRole: role });
+          try {
+            // Call auth edge function on sign in
+            if (event === 'SIGNED_IN') {
+              const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/auth`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ event, session }),
+              });
+
+              const data = await response.json();
+              if (!data.success) {
+                await supabase.auth.signOut();
+                set({ 
+                  session: null, 
+                  user: null, 
+                  userRole: null,
+                  error: 'Unauthorized email domain'
+                });
+                return;
+              }
+            }
+
+            const role = await getUserRole(session.user.id);
+            set({ session, user: session.user, userRole: role });
+          } catch (error) {
+            console.error('Auth error:', error);
+            set({ 
+              session: null, 
+              user: null, 
+              userRole: null,
+              error: 'Authentication failed'
+            });
+          }
         } else {
           set({ session: null, user: null, userRole: null });
         }
@@ -58,7 +92,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
-            hd: 'nrwl.io' // Restrict to nrwl.io domain
           }
         }
       });

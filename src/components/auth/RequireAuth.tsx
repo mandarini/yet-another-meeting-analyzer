@@ -27,11 +27,6 @@ const RequireAuth = ({ children, allowedRoles }: RequireAuthProps) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Check if user's email is from nrwl.io domain
-  if (!session.user.email?.endsWith('@nrwl.io')) {
-    return <Navigate to="/unauthorized" replace />;
-  }
-
   // Check role-based access if roles are specified
   if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
     return <Navigate to="/" replace />;
