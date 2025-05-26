@@ -41,6 +41,7 @@ export const useTranscriptStore = create<TranscriptState>((set) => ({
       
       return result;
     } catch (error: any) {
+      console.error('Error submitting transcript:', error);
       set({ 
         error: error?.message || 'An error occurred while submitting the transcript', 
         loading: false, 
@@ -54,16 +55,20 @@ export const useTranscriptStore = create<TranscriptState>((set) => ({
     set({ loading: true, error: null });
     
     try {
+      console.log('Loading meeting:', id);
       const meeting = await getMeeting(id);
       
       if (!meeting) {
+        console.error('No meeting data returned');
         set({ 
-          error: 'Failed to load meeting data', 
-          loading: false 
+          error: 'Meeting not found', 
+          loading: false,
+          currentMeeting: null
         });
         return null;
       }
       
+      console.log('Meeting loaded:', meeting);
       set({ 
         currentMeeting: meeting, 
         loading: false 
@@ -71,9 +76,11 @@ export const useTranscriptStore = create<TranscriptState>((set) => ({
       
       return meeting;
     } catch (error: any) {
+      console.error('Error loading meeting:', error);
       set({ 
-        error: error?.message || 'An error occurred while loading the meeting', 
-        loading: false 
+        error: error?.message || 'Failed to load meeting data', 
+        loading: false,
+        currentMeeting: null
       });
       return null;
     }
