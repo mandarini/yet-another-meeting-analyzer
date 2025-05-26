@@ -12,10 +12,13 @@ import SubmitTranscript from './pages/SubmitTranscript';
 import AnalysisResults from './pages/AnalysisResults';
 import HistoricalData from './pages/HistoricalData';
 import FollowUps from './pages/FollowUps';
+import AdminDashboard from './pages/admin/Dashboard';
+import Unauthorized from './pages/Unauthorized';
 import NotFound from './pages/NotFound';
 
-// Auth provider
+// Auth provider and guard
 import { AuthProvider } from './context/AuthContext';
+import RequireAuth from './components/auth/RequireAuth';
 
 function App() {
   const { initializeAuth, session, loading } = useAuthStore();
@@ -44,13 +47,24 @@ function App() {
       <Router>
         <Routes>
           <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
           
-          <Route element={<AppLayout />}>
-            <Route path="/" element={session ? <Dashboard /> : <Navigate to="/login" />} />
-            <Route path="/submit" element={session ? <SubmitTranscript /> : <Navigate to="/login" />} />
-            <Route path="/analysis/:id" element={session ? <AnalysisResults /> : <Navigate to="/login" />} />
-            <Route path="/historical" element={session ? <HistoricalData /> : <Navigate to="/login" />} />
-            <Route path="/follow-ups" element={session ? <FollowUps /> : <Navigate to="/login" />} />
+          <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/submit" element={<SubmitTranscript />} />
+            <Route path="/analysis/:id" element={<AnalysisResults />} />
+            <Route path="/historical" element={<HistoricalData />} />
+            <Route path="/follow-ups" element={<FollowUps />} />
+            
+            {/* Admin routes */}
+            <Route 
+              path="/admin" 
+              element={
+                <RequireAuth allowedRoles={['super_admin', 'admin']}>
+                  <AdminDashboard />
+                </RequireAuth>
+              } 
+            />
           </Route>
           
           <Route path="*" element={<NotFound />} />
@@ -59,5 +73,3 @@ function App() {
     </AuthProvider>
   );
 }
-
-export default App;
