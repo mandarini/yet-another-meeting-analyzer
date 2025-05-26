@@ -34,6 +34,7 @@ const TranscriptForm = () => {
   const [companies, setCompanies] = useState<Array<{ id: string; name: string }>>([]);
   const [isNewCompany, setIsNewCompany] = useState(false);
   const [companyError, setCompanyError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   
   const {
     register,
@@ -94,16 +95,26 @@ const TranscriptForm = () => {
       return;
     }
 
-    const formattedData = {
-      ...data,
-      companyName: finalCompanyName,
-      userId: user.id,
-    };
-    
-    const result = await submitNewTranscript(formattedData);
-    
-    if (result) {
-      navigate(`/analysis/${result.meetingId}`);
+    setSubmitting(true);
+
+    try {
+      const formattedData = {
+        ...data,
+        companyName: finalCompanyName,
+        userId: user.id,
+      };
+      
+      const result = await submitNewTranscript(formattedData);
+      
+      if (result?.meetingId) {
+        // Wait a moment for the data to be saved
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        navigate(`/analysis/${result.meetingId}`);
+      }
+    } catch (error) {
+      console.error('Error submitting transcript:', error);
+    } finally {
+      setSubmitting(false);
     }
   };
   
@@ -215,11 +226,11 @@ const TranscriptForm = () => {
         <CardFooter className="flex justify-end">
           <Button
             type="submit"
-            disabled={loading}
-            isLoading={loading}
-            rightIcon={loading ? <Loader size={16} /> : <SendHorizonal size={16} />}
+            disabled={loading || submitting}
+            isLoading={loading || submitting}
+            rightIcon={loading || submitting ? <Loader size={16} /> : <SendHorizonal size={16} />}
           >
-            {loading ? 'Analyzing...' : 'Submit for Analysis'}
+            {loading || submitting ? 'Analyzing...' : 'Submit for Analysis'}
           </Button>
         </CardFooter>
       </Card>
