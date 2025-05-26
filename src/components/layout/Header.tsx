@@ -7,12 +7,11 @@ interface HeaderProps {
   user: any;
 }
 
-const Header = ({ toggleSidebar, user }: HeaderProps) => {
+const Header = ({ user }: HeaderProps) => {
   const [darkMode, setDarkMode] = useState(
     localStorage.getItem('theme') === 'dark' || 
     (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)
   );
-  const { signOut } = useAuthStore();
 
   useEffect(() => {
     if (darkMode) {
@@ -31,16 +30,7 @@ const Header = ({ toggleSidebar, user }: HeaderProps) => {
   return (
     <header className="sticky top-0 z-20 bg-white dark:bg-gray-800 shadow-sm">
       <div className="px-4 md:px-6 h-16 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <button
-            className="p-1 rounded-md text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
-            onClick={toggleSidebar}
-            aria-label="Toggle sidebar"
-            data-sidebar-toggle
-          >
-            <AlignLeft size={24} />
-          </button>
-          
+        <div className="flex items-center">
           <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-100 hidden md:block">
             Transcript Analyzer
           </h1>
