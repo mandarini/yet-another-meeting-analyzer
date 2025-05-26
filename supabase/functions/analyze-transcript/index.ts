@@ -125,6 +125,19 @@ SECONDARY INFORMATION:
 - Favorite Nx features
 - Advanced feature usage (Agents, MFE, Crystal/Inferred tasks, Atomizer)
 
+FOLLOW-UPS (CRITICAL):
+- Extract ALL action items and follow-ups mentioned in the conversation
+- Each follow-up MUST have:
+  * A clear description of what needs to be done
+  * A specific deadline (use "ASAP" if no specific date mentioned)
+  * Who it's assigned to (use "sales_rep" if not specified)
+- Examples of follow-ups:
+  * "Schedule a demo of Nx Cloud features" (deadline: "ASAP", assignedTo: "sales_rep")
+  * "Send pricing information for enterprise plan" (deadline: "2024-06-01", assignedTo: "sales_rep")
+  * "Follow up on migration plan" (deadline: "2024-05-30", assignedTo: "sales_rep")
+- If no follow-ups are mentioned, include at least one default follow-up:
+  * "Schedule next check-in call" (deadline: "ASAP", assignedTo: "sales_rep")
+
 FORMAT RULES:
 - If information is not mentioned, set to "unknown" or empty array
 - For satisfaction scores, use 0 if not mentioned
@@ -462,13 +475,38 @@ Deno.serve(async (req) => {
       .eq('normalized_name', companyName.toLowerCase().trim())
       .maybeSingle();
 
+    if (lookupError) {
+      console.error('Error looking up company:', lookupError);
+      throw new Error(`Failed to look up company: ${lookupError.message}`);
+    }
+
+    console.log('Existing company:', existingCompany);
+    console.log('Company data to upsert:', {
+      id: existingCompany?.id,
+      name: companyName,
+      technologies_used: analysisResults.technologiesUsed,
+      nx_version: analysisResults.nxVersion,
+      nx_cloud_usage: analysisResults.nxCloudUsage.status,
+      nx_cloud_why_not: analysisResults.nxCloudUsage.whyNot,
+      years_using_nx: analysisResults.yearsUsingNx,
+      workspace_size: analysisResults.workspaceSize,
+      nx_adoption_approach: analysisResults.nxAdoptionApproach,
+      ci_provider: analysisResults.ciProvider,
+      satisfaction_nx: analysisResults.satisfaction.nx,
+      satisfaction_nx_cloud: analysisResults.satisfaction.nxCloud,
+      agents_usage: analysisResults.advancedFeatureUsage.agents,
+      mfe_usage: analysisResults.advancedFeatureUsage.mfe,
+      crystal_usage: analysisResults.advancedFeatureUsage.crystalInferredTasks,
+      atomizer_usage: analysisResults.advancedFeatureUsage.atomizer,
+      updated_at: new Date().toISOString()
+    });
+
     // Create or update company with extracted information
     const { data: company, error: companyError } = await supabase
       .from('companies')
       .upsert({
         id: existingCompany?.id, // Will be undefined for new companies
         name: companyName,
-        normalized_name: companyName.toLowerCase().trim(),
         technologies_used: analysisResults.technologiesUsed,
         nx_version: analysisResults.nxVersion,
         nx_cloud_usage: analysisResults.nxCloudUsage.status,
@@ -488,8 +526,14 @@ Deno.serve(async (req) => {
       .select()
       .single();
 
-    if (companyError || !company) {
-      throw new Error('Failed to create/update company');
+    if (companyError) {
+      console.error('Error creating/updating company:', companyError);
+      throw new Error(`Failed to create/update company: ${companyError.message}`);
+    }
+
+    if (!company) {
+      console.error('No company data returned after upsert');
+      throw new Error('Failed to create/update company: No data returned');
     }
 
     // Create meeting record
@@ -556,8 +600,10 @@ Deno.serve(async (req) => {
     });
 
     // Store follow-ups
+    console.log('Generated follow-ups:', analysisResults.followUps);
     const followUpPromises = analysisResults.followUps.map(async (followUp) => {
       try {
+        console.log('Storing follow-up:', followUp);
         const { error: followUpError } = await supabase
           .from('follow_ups')
           .insert({
