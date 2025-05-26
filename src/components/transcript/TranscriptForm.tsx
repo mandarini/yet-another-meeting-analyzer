@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { useTranscriptStore } from '../../stores/transcriptStore';
@@ -6,12 +6,14 @@ import { useAuthStore } from '../../stores/authStore';
 import { Input, TextArea, Select } from '../ui/FormElements';
 import Button from '../ui/Button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/Card';
-import { FileText, SendHorizonal, Loader } from 'lucide-react';
+import { FileText, SendHorizonal, Loader, Plus } from 'lucide-react';
+import { getCompanies } from '../../lib/supabase';
 
 interface TranscriptFormData {
   title: string;
   date: string;
   companyName: string;
+  newCompanyName?: string;
   purpose: string;
   transcriptText: string;
 }
@@ -29,12 +31,16 @@ const TranscriptForm = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const [charCount, setCharCount] = useState(0);
+  const [companies, setCompanies] = useState<Array<{ id: string; name: string }>>([]);
+  const [isNewCompany, setIsNewCompany] = useState(false);
+  const [companyError, setCompanyError] = useState<string | null>(null);
   
   const {
     register,
     handleSubmit,
-    formState: { errors },
     watch,
+    setValue,
+    formState: { errors },
   } = useForm<TranscriptFormData>({
     defaultValues: {
       date: new Date().toISOString().split('T')[0],
@@ -42,19 +48,62 @@ const TranscriptForm = () => {
   });
   
   const transcriptText = watch('transcriptText');
+  const selectedCompany = watch('companyName');
+  const newCompanyName = watch('newCompanyName');
+  
+  useEffect(() => {
+    const loadCompanies = async () => {
+      try {
+        const data = await getCompanies();
+        setCompanies(data.map(c => ({ id: c.id, name: c.name })));
+      } catch (err) {
+        console.error('Error loading companies:', err);
+      }
+    };
+    loadCompanies();
+  }, []);
+
+  useEffect(() => {
+    if (selectedCompany === 'new') {
+      setIsNewCompany(true);
+    } else {
+      setIsNewCompany(false);
+    }
+  }, [selectedCompany]);
+
+  const validateCompanyName = (name: string) => {
+    if (companies.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+      setCompanyError('A company with this name already exists');
+      return false;
+    }
+    setCompanyError(null);
+    return true;
+  };
   
   const onSubmit = async (data: TranscriptFormData) => {
-    if (user) {
-      const formattedData = {
-        ...data,
-        userId: user.id,
-      };
-      
-      const result = await submitNewTranscript(formattedData);
-      
-      if (result) {
-        navigate(`/analysis/${result.meetingId}`);
-      }
+    if (!user) return;
+
+    const finalCompanyName = data.companyName === 'new' ? data.newCompanyName : data.companyName;
+    
+    if (!finalCompanyName) {
+      setCompanyError('Company name is required');
+      return;
+    }
+
+    if (data.companyName === 'new' && !validateCompanyName(finalCompanyName)) {
+      return;
+    }
+
+    const formattedData = {
+      ...data,
+      companyName: finalCompanyName,
+      userId: user.id,
+    };
+    
+    const result = await submitNewTranscript(formattedData);
+    
+    if (result) {
+      navigate(`/analysis/${result.meetingId}`);
     }
   };
   
@@ -86,12 +135,35 @@ const TranscriptForm = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Company Name"
-              placeholder="Enter company name"
-              {...register('companyName', { required: 'Company name is required' })}
-              error={errors.companyName?.message}
-            />
+            <div>
+              <Select
+                label="Company"
+                {...register('companyName', { required: 'Company is required' })}
+                error={errors.companyName?.message}
+              >
+                <option value="">Select a company</option>
+                {companies.map((company) => (
+                  <option key={company.id} value={company.name}>
+                    {company.name}
+                  </option>
+                ))}
+                <option value="new">
+                  + Add New Company
+                </option>
+              </Select>
+
+              {isNewCompany && (
+                <div className="mt-2">
+                  <Input
+                    placeholder="Enter new company name"
+                    {...register('newCompanyName', {
+                      required: isNewCompany ? 'Company name is required' : false,
+                    })}
+                    error={companyError || errors.newCompanyName?.message}
+                  />
+                </div>
+              )}
+            </div>
             
             <Select
               label="Meeting Purpose"
