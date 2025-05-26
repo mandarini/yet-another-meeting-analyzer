@@ -3,7 +3,8 @@ import {
   FileText, 
   BarChart2, 
   ClipboardCheck,
-  Shield,
+  Building2,
+  AlertCircle,
   LogOut,
   X
 } from 'lucide-react';
@@ -15,20 +16,19 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ closeSidebar }: SidebarProps) => {
-  const { signOut, userRole } = useAuthStore();
+  const { signOut } = useAuthStore();
   
   const handleSignOut = async () => {
     await signOut();
   };
 
-  const isAdmin = userRole === 'super_admin' || userRole === 'admin';
-
   const navItems = [
     { path: '/', label: 'Dashboard', icon: <Home size={20} /> },
     { path: '/submit', label: 'Submit Transcript', icon: <FileText size={20} /> },
+    { path: '/companies', label: 'Companies', icon: <Building2 size={20} /> },
+    { path: '/pain-points', label: 'Pain Points', icon: <AlertCircle size={20} /> },
     { path: '/historical', label: 'Historical Data', icon: <BarChart2 size={20} /> },
     { path: '/follow-ups', label: 'Follow Ups', icon: <ClipboardCheck size={20} /> },
-    ...(isAdmin ? [{ path: '/admin', label: 'Admin', icon: <Shield size={20} /> }] : []),
   ];
 
   return (

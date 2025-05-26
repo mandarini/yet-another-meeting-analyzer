@@ -25,6 +25,72 @@ export const getProfile = async (userId: string) => {
   return data;
 };
 
+export const getCompanies = async () => {
+  const { data, error } = await supabase
+    .from('companies')
+    .select(`
+      *,
+      meetings (
+        id,
+        date,
+        title
+      )
+    `)
+    .order('name');
+
+  if (error) {
+    console.error('Error fetching companies:', error);
+    throw error;
+  }
+
+  // Process the data to include last meeting date
+  return data.map(company => ({
+    ...company,
+    last_meeting_date: company.meetings?.length > 0 
+      ? company.meetings.reduce((latest: string, meeting: any) => {
+          return !latest || new Date(meeting.date) > new Date(latest) 
+            ? meeting.date 
+            : latest;
+        }, '')
+      : null
+  }));
+};
+
+export const getCompany = async (id: string) => {
+  const { data, error } = await supabase
+    .from('companies')
+    .select(`
+      *,
+      meetings (
+        id,
+        date,
+        title,
+        transcript_processed,
+        pain_points (
+          id,
+          description,
+          urgency_score,
+          category
+        ),
+        follow_ups (
+          id,
+          description,
+          deadline,
+          status
+        )
+      )
+    `)
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    console.error('Error fetching company:', error);
+    throw error;
+  }
+
+  return data;
+};
+
 export const getMeetings = async (limit = 10) => {
   const { data, error } = await supabase
     .from('meetings')
@@ -87,7 +153,14 @@ export const getMeeting = async (id: string) => {
         id,
         name,
         domain,
-        nx_usage_level
+        nx_usage_level,
+        nx_version,
+        nx_cloud_usage,
+        nx_cloud_why_not,
+        years_using_nx,
+        workspace_size,
+        ci_provider,
+        technologies_used
       ),
       pain_points (
         id,
@@ -166,7 +239,6 @@ export const updateFollowUpStatus = async (id: string, status: string) => {
 
 export const submitTranscript = async (transcriptData: any) => {
   try {
-    // Call the analyze-transcript Edge Function
     const response = await fetch(
       `${supabaseUrl}/functions/v1/analyze-transcript`,
       {

@@ -12,13 +12,13 @@ import SubmitTranscript from './pages/SubmitTranscript';
 import AnalysisResults from './pages/AnalysisResults';
 import HistoricalData from './pages/HistoricalData';
 import FollowUps from './pages/FollowUps';
-import AdminDashboard from './pages/admin/Dashboard';
-import Unauthorized from './pages/Unauthorized';
+import Companies from './pages/Companies';
+import CompanyProfile from './pages/CompanyProfile';
+import PainPoints from './pages/PainPoints';
 import NotFound from './pages/NotFound';
 
-// Auth provider and guard
+// Auth provider
 import { AuthProvider } from './context/AuthContext';
-import RequireAuth from './components/auth/RequireAuth';
 
 function App() {
   const { initializeAuth, session, loading } = useAuthStore();
@@ -47,24 +47,16 @@ function App() {
       <Router>
         <Routes>
           <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
-          <Route path="/unauthorized" element={<Unauthorized />} />
           
-          <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/submit" element={<SubmitTranscript />} />
-            <Route path="/analysis/:id" element={<AnalysisResults />} />
-            <Route path="/historical" element={<HistoricalData />} />
-            <Route path="/follow-ups" element={<FollowUps />} />
-            
-            {/* Admin routes */}
-            <Route 
-              path="/admin" 
-              element={
-                <RequireAuth allowedRoles={['super_admin', 'admin']}>
-                  <AdminDashboard />
-                </RequireAuth>
-              } 
-            />
+          <Route element={<AppLayout />}>
+            <Route path="/" element={session ? <Dashboard /> : <Navigate to="/login" />} />
+            <Route path="/submit" element={session ? <SubmitTranscript /> : <Navigate to="/login" />} />
+            <Route path="/analysis/:id" element={session ? <AnalysisResults /> : <Navigate to="/login" />} />
+            <Route path="/historical" element={session ? <HistoricalData /> : <Navigate to="/login" />} />
+            <Route path="/follow-ups" element={session ? <FollowUps /> : <Navigate to="/login" />} />
+            <Route path="/companies" element={session ? <Companies /> : <Navigate to="/login" />} />
+            <Route path="/companies/:id" element={session ? <CompanyProfile /> : <Navigate to="/login" />} />
+            <Route path="/pain-points" element={session ? <PainPoints /> : <Navigate to="/login" />} />
           </Route>
           
           <Route path="*" element={<NotFound />} />
@@ -74,4 +66,4 @@ function App() {
   );
 }
 
-export default App
+export default App;
