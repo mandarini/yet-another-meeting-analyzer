@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import type { Session } from '@supabase/supabase-js';
@@ -26,15 +27,11 @@ export const useAuthStore = create<AuthState>((set) => ({
       const { data: { session } } = await supabase.auth.getSession();
       set({ session, user: session?.user ?? null, loading: false });
 
-      const { data: { subscription } } = await supabase.auth.onAuthStateChange(
+      supabase.auth.onAuthStateChange(
         (_event, session) => {
           set({ session, user: session?.user ?? null });
         }
       );
-
-      return () => {
-        subscription.unsubscribe();
-      };
     } catch (error) {
       console.error('Error initializing auth:', error);
       set({ error: 'Failed to initialize authentication', loading: false });
@@ -45,19 +42,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ loading: true, error: null });
     
     try {
-      const redirectTo = import.meta.env.PROD 
-        ? 'https://yama-io.netlify.app/login'
-        : `${window.location.origin}/login`;
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
-          },
-          skipBrowserRedirect: false
+          }
         }
       });
       
@@ -78,19 +69,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ loading: true, error: null });
     
     try {
-      const redirectTo = import.meta.env.PROD 
-        ? 'https://yama-io.netlify.app/login'
-        : `${window.location.origin}/login`;
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
-          },
-          skipBrowserRedirect: false
+          }
         }
       });
       
