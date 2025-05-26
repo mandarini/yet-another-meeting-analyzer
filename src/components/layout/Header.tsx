@@ -27,6 +27,9 @@ const Header = ({ user }: HeaderProps) => {
     setDarkMode(!darkMode);
   };
 
+  // Get user's avatar URL from Google provider data
+  const avatarUrl = user?.user_metadata?.avatar_url || null;
+
   return (
     <header className="sticky top-0 z-20 bg-white dark:bg-gray-800 shadow-sm">
       <div className="px-4 md:px-6 h-16 flex items-center justify-between">
@@ -47,9 +50,17 @@ const Header = ({ user }: HeaderProps) => {
           
           <div className="relative">
             <div className="flex items-center space-x-2 p-1 rounded-md">
-              <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white">
-                {user?.email?.charAt(0).toUpperCase() || 'U'}
-              </div>
+              {avatarUrl ? (
+                <img 
+                  src={avatarUrl} 
+                  alt={user?.email || 'User'} 
+                  className="h-8 w-8 rounded-full object-cover"
+                />
+              ) : (
+                <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white">
+                  {user?.email?.charAt(0).toUpperCase() || 'U'}
+                </div>
+              )}
               <span className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-200">
                 {user?.email?.split('@')[0] || 'User'}
               </span>
