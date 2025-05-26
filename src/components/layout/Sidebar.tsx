@@ -2,10 +2,9 @@ import {
   Home, 
   FileText, 
   BarChart2, 
-  ClipboardCheck, 
-  Settings, 
-  LogOut,
+  ClipboardCheck,
   Shield,
+  LogOut,
   X
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
@@ -30,7 +29,6 @@ const Sidebar = ({ closeSidebar }: SidebarProps) => {
     { path: '/historical', label: 'Historical Data', icon: <BarChart2 size={20} /> },
     { path: '/follow-ups', label: 'Follow Ups', icon: <ClipboardCheck size={20} /> },
     ...(isAdmin ? [{ path: '/admin', label: 'Admin', icon: <Shield size={20} /> }] : []),
-    { path: '/settings', label: 'Settings', icon: <Settings size={20} /> },
   ];
 
   return (
@@ -87,5 +85,3 @@ const Sidebar = ({ closeSidebar }: SidebarProps) => {
     </div>
   );
 };
-
-export default Sidebar;

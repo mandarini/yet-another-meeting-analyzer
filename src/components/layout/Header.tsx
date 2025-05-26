@@ -1,4 +1,4 @@
-import { Menu, Bell, Moon, Sun, AlignLeft } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore';
 
@@ -55,29 +55,15 @@ const Header = ({ toggleSidebar, user }: HeaderProps) => {
             {darkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
           
-          <button
-            className="p-1 rounded-md text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none relative"
-            aria-label="Notifications"
-          >
-            <Bell size={20} />
-            <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
-          </button>
-          
           <div className="relative">
-            <button
-              className="flex items-center space-x-2 p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
-              aria-label="User menu"
-            >
+            <div className="flex items-center space-x-2 p-1 rounded-md">
               <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white">
                 {user?.email?.charAt(0).toUpperCase() || 'U'}
               </div>
               <span className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-200">
                 {user?.email?.split('@')[0] || 'User'}
               </span>
-              <Menu size={16} className="hidden md:block text-gray-500 dark:text-gray-300" />
-            </button>
-            
-            {/* Dropdown menu would go here */}
+            </div>
           </div>
         </div>
       </div>
