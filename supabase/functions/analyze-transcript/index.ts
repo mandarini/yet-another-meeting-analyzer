@@ -61,6 +61,13 @@ interface NxAnalysisResults {
     urgencyScore: number;
     category: string;
   }>;
+
+  // Nx Opportunities
+  nxOpportunities: Array<{
+    nx_feature: string;
+    confidence_score: number;
+    suggested_approach: string;
+  }>;
   
   // Global analysis results
   globalInsights: {
@@ -138,6 +145,18 @@ SECONDARY INFORMATION:
 - Favorite Nx features
 - Advanced feature usage (Agents, MFE, Crystal/Inferred tasks, Atomizer)
 
+NX OPPORTUNITIES (CRITICAL):
+- Identify potential Nx features or solutions that could help with their pain points
+- For each opportunity:
+  * The specific Nx feature that could help
+  * A confidence score (0-1) based on how well it matches their needs
+  * A suggested approach for implementing the solution
+- Examples:
+  * If they mention slow builds: "Nx Cloud" with high confidence
+  * If they mention complex monorepo: "Nx Agents" with medium confidence
+  * If they mention micro-frontends: "Nx MFE" with high confidence
+- Only include opportunities with confidence score > 0.5
+
 FOLLOW-UPS (CRITICAL):
 - Extract ALL action items and follow-ups mentioned in the conversation
 - Each follow-up MUST have:
@@ -201,6 +220,11 @@ Return a JSON object with this exact structure:
     "description": string,
     "urgencyScore": number,
     "category": string
+  }],
+  "nxOpportunities": [{
+    "nx_feature": string,
+    "confidence_score": number,
+    "suggested_approach": string
   }]
 }`;
 
@@ -292,6 +316,7 @@ Return a JSON object with this exact structure:
     followUps: Array.isArray(results.followUps) ? results.followUps : [],
     executiveSummary: results.executiveSummary || '',
     additionalPainPoints: Array.isArray(results.additionalPainPoints) ? results.additionalPainPoints : [],
+    nxOpportunities: Array.isArray(results.nxOpportunities) ? results.nxOpportunities : [],
     globalInsights: {
       similarPainPointsAcrossCustomers: [],
       industryTrends: [],
@@ -640,6 +665,27 @@ Deno.serve(async (req) => {
           .single();
 
         if (painPointError) throw painPointError;
+
+        // Create opportunities for this pain point
+        const opportunities = analysisResults.nxOpportunities
+          .filter(opp => opp.confidence_score > 0.5)
+          .map(async (opp) => {
+            const { error: oppError } = await supabase
+              .from('nx_opportunities')
+              .insert({
+                meeting_id: meetingId,
+                pain_point_id: painPoint.id,
+                nx_feature: opp.nx_feature,
+                confidence_score: opp.confidence_score,
+                suggested_approach: opp.suggested_approach
+              });
+
+            if (oppError) {
+              console.error('Error creating opportunity:', oppError);
+            }
+          });
+
+        await Promise.all(opportunities);
         return painPoint;
       } catch (error) {
         console.error('Error processing pain point:', error);
