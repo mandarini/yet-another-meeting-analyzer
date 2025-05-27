@@ -34,28 +34,33 @@ export const useDashboardStore = create<DashboardState>((set) => ({
     set({ loading: true, error: null });
     
     try {
-      // Load recent meetings
-      const meetings = await getMeetings(5);
+      // Load all meetings for opportunities count
+      const allMeetings = await getMeetings();
       
-      // Load pending follow-ups
-      const followUps = await getFollowUps('pending');
+      // Load recent meetings for display
+      const recentMeetings = await getMeetings(5);
+      
+      // Load both pending and completed follow-ups
+      const [pendingFollowUps, completedFollowUps] = await Promise.all([
+        getFollowUps('pending'),
+        getFollowUps('completed')
+      ]);
       
       // Calculate stats
       const stats = {
-        totalMeetings: meetings.length,
-        pendingFollowUps: followUps.length,
-        completedTasks: meetings.reduce((sum, meeting) => 
-          sum + (meeting.follow_ups?.filter((f: any) => f.status === 'completed').length || 0), 0),
-        opportunities: meetings.reduce((sum, meeting) => 
+        totalMeetings: allMeetings.length,
+        pendingFollowUps: pendingFollowUps.length,
+        completedTasks: completedFollowUps.length,
+        opportunities: allMeetings.reduce((sum, meeting) => 
           sum + (meeting.nx_opportunities?.length || 0), 0),
       };
       
-      // Extract trending issues
-      const issues = extractTrendingIssues(meetings);
+      // Extract trending issues from recent meetings
+      const issues = extractTrendingIssues(recentMeetings);
       
       set({
-        recentMeetings: meetings,
-        pendingFollowUps: followUps,
+        recentMeetings,
+        pendingFollowUps,
         trendingIssues: issues,
         stats,
         loading: false
