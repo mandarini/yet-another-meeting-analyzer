@@ -51,7 +51,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       if (session?.user) {
         const role = await fetchUserRoleWithRetry(session.user.id);
         set({ user: session.user, session, role, loading: false });
-        // Redirect to dashboard if we're on the login page
+        // Only redirect to dashboard if we're on the login page
         if (window.location.pathname.includes('/login')) {
           window.location.href = '/dashboard';
         }
@@ -165,5 +165,8 @@ supabase.auth.onAuthStateChange(async (event, session) => {
     if (!window.location.pathname.includes('/login')) {
       window.location.href = '/login';
     }
+  } else if (event === 'INITIAL_SESSION') {
+    // Ensure loading state is cleared after initial session check
+    store.setState({ loading: false });
   }
 });
