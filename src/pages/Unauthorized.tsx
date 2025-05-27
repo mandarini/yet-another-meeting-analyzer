@@ -15,13 +15,13 @@ const Unauthorized = () => {
         <h1 className="mt-6 text-3xl font-bold text-gray-900 dark:text-white">Unauthorized Access</h1>
         
         <p className="mt-3 text-gray-600 dark:text-gray-300">
-          Sorry, this application is only accessible to @nrwl.io email addresses.
+          You don't have permission to access this page.
         </p>
         
         <div className="mt-8">
           <Link to="/">
             <Button leftIcon={<ArrowLeft size={16} />}>
-              Back to Login
+              Back to Home
             </Button>
           </Link>
         </div>

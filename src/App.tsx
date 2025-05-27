@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAuthStore } from './stores/authStore';
 
@@ -18,13 +18,15 @@ import PainPoints from './pages/PainPoints';
 import Opportunities from './pages/Opportunities';
 import AdminDashboard from './pages/admin/Dashboard';
 import NotFound from './pages/NotFound';
+import Unauthorized from './pages/Unauthorized';
+import AuthCallback from './pages/AuthCallback';
 
 // Auth provider
 import { AuthProvider } from './context/AuthContext';
 import RequireAuth from './components/auth/RequireAuth';
 
 function App() {
-  const { initializeAuth, session, loading } = useAuthStore();
+  const { initializeAuth, loading } = useAuthStore();
 
   useEffect(() => {
     initializeAuth();
@@ -49,26 +51,25 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           
           <Route element={<AppLayout />}>
-            <Route path="/" element={session ? <Dashboard /> : <Navigate to="/login" />} />
-            <Route path="/submit" element={session ? <SubmitTranscript /> : <Navigate to="/login" />} />
-            <Route path="/analysis/:id" element={session ? <AnalysisResults /> : <Navigate to="/login" />} />
-            <Route path="/historical" element={session ? <HistoricalData /> : <Navigate to="/login" />} />
-            <Route path="/follow-ups" element={session ? <FollowUps /> : <Navigate to="/login" />} />
-            <Route path="/companies" element={session ? <Companies /> : <Navigate to="/login" />} />
-            <Route path="/companies/:id" element={session ? <CompanyProfile /> : <Navigate to="/login" />} />
-            <Route path="/pain-points" element={session ? <PainPoints /> : <Navigate to="/login" />} />
-            <Route path="/opportunities" element={session ? <Opportunities /> : <Navigate to="/login" />} />
-            <Route 
-              path="/admin" 
-              element={
-                <RequireAuth allowedRoles={['super_admin', 'admin']}>
-                  <AdminDashboard />
-                </RequireAuth>
-              } 
-            />
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/submit" element={<SubmitTranscript />} />
+            <Route path="/analysis/:id" element={<AnalysisResults />} />
+            <Route path="/historical" element={<HistoricalData />} />
+            <Route path="/follow-ups" element={<FollowUps />} />
+            <Route path="/companies" element={<Companies />} />
+            <Route path="/companies/:id" element={<CompanyProfile />} />
+            <Route path="/pain-points" element={<PainPoints />} />
+            <Route path="/opportunities" element={<Opportunities />} />
+            <Route path="/admin" element={
+              <RequireAuth allowedRoles={['super_admin', 'admin']}>
+                <AdminDashboard />
+              </RequireAuth>
+            } />
           </Route>
           
           <Route path="*" element={<NotFound />} />
