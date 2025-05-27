@@ -18,6 +18,8 @@ import PainPoints from './pages/PainPoints';
 import Opportunities from './pages/Opportunities';
 import AdminDashboard from './pages/admin/Dashboard';
 import NotFound from './pages/NotFound';
+import Unauthorized from './pages/Unauthorized';
+import AuthCallback from './pages/AuthCallback';
 
 // Auth provider
 import { AuthProvider } from './context/AuthContext';
@@ -50,25 +52,60 @@ function App() {
       <Router>
         <Routes>
           <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           
           <Route element={<AppLayout />}>
-            <Route path="/" element={session ? <Dashboard /> : <Navigate to="/login" />} />
-            <Route path="/submit" element={session ? <SubmitTranscript /> : <Navigate to="/login" />} />
-            <Route path="/analysis/:id" element={session ? <AnalysisResults /> : <Navigate to="/login" />} />
-            <Route path="/historical" element={session ? <HistoricalData /> : <Navigate to="/login" />} />
-            <Route path="/follow-ups" element={session ? <FollowUps /> : <Navigate to="/login" />} />
-            <Route path="/companies" element={session ? <Companies /> : <Navigate to="/login" />} />
-            <Route path="/companies/:id" element={session ? <CompanyProfile /> : <Navigate to="/login" />} />
-            <Route path="/pain-points" element={session ? <PainPoints /> : <Navigate to="/login" />} />
-            <Route path="/opportunities" element={session ? <Opportunities /> : <Navigate to="/login" />} />
-            <Route 
-              path="/admin" 
-              element={
-                <RequireAuth allowedRoles={['super_admin', 'admin']}>
-                  <AdminDashboard />
-                </RequireAuth>
-              } 
-            />
+            <Route path="/" element={
+              <RequireAuth>
+                <Dashboard />
+              </RequireAuth>
+            } />
+            <Route path="/submit" element={
+              <RequireAuth>
+                <SubmitTranscript />
+              </RequireAuth>
+            } />
+            <Route path="/analysis/:id" element={
+              <RequireAuth>
+                <AnalysisResults />
+              </RequireAuth>
+            } />
+            <Route path="/historical" element={
+              <RequireAuth>
+                <HistoricalData />
+              </RequireAuth>
+            } />
+            <Route path="/follow-ups" element={
+              <RequireAuth>
+                <FollowUps />
+              </RequireAuth>
+            } />
+            <Route path="/companies" element={
+              <RequireAuth>
+                <Companies />
+              </RequireAuth>
+            } />
+            <Route path="/companies/:id" element={
+              <RequireAuth>
+                <CompanyProfile />
+              </RequireAuth>
+            } />
+            <Route path="/pain-points" element={
+              <RequireAuth>
+                <PainPoints />
+              </RequireAuth>
+            } />
+            <Route path="/opportunities" element={
+              <RequireAuth>
+                <Opportunities />
+              </RequireAuth>
+            } />
+            <Route path="/admin" element={
+              <RequireAuth allowedRoles={['super_admin', 'admin']}>
+                <AdminDashboard />
+              </RequireAuth>
+            } />
           </Route>
           
           <Route path="*" element={<NotFound />} />

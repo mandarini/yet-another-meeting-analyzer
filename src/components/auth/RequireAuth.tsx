@@ -27,9 +27,26 @@ const RequireAuth = ({ children, allowedRoles }: RequireAuthProps) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Check role-based access if roles are specified
-  if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
-    return <Navigate to="/" replace />;
+  // If no roles are specified, allow access to any authenticated user
+  if (!allowedRoles) {
+    return <>{children}</>;
+  }
+
+  // If roles are specified but userRole is not yet loaded, show loading
+  if (!userRole) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Verifying role...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check role-based access
+  if (!allowedRoles.includes(userRole)) {
+    return <Navigate to="/unauthorized" replace />;
   }
 
   return <>{children}</>;

@@ -1,57 +1,58 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
-import type { Session } from '@supabase/supabase-js';
-import { getUserRole, UserRole } from '../lib/auth';
+import { User, Session } from '@supabase/supabase-js';
+import { getUserRole } from '../lib/auth';
 
 interface AuthState {
+  user: User | null;
   session: Session | null;
-  user: any | null;
-  userRole: UserRole | null;
+  role: string | null;
   loading: boolean;
   error: string | null;
   initializeAuth: () => Promise<void>;
-  signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+  setError: (error: string | null) => void;
+  setState: (state: Partial<AuthState>) => void;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
-  session: null,
+const MAX_ROLE_FETCH_RETRIES = 3;
+const ROLE_FETCH_DELAY = 1000; // 1 second
+
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const fetchUserRoleWithRetry = async (userId: string, retries = MAX_ROLE_FETCH_RETRIES): Promise<string> => {
+  try {
+    const role = await getUserRole(userId);
+    if (role) return role;
+    throw new Error('No role found');
+  } catch {
+    if (retries > 0) {
+      await delay(ROLE_FETCH_DELAY);
+      return fetchUserRoleWithRetry(userId, retries - 1);
+    }
+    console.warn('Failed to fetch user role after retries, using default role');
+    return 'user';
+  }
+};
+
+export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  userRole: null,
+  session: null,
+  role: null,
   loading: true,
   error: null,
 
   initializeAuth: async () => {
-    set({ loading: true });
-    
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user) {
-        const role = await getUserRole(session.user.id);
-        set({ session, user: session.user, userRole: role, loading: false });
-      } else {
-        set({ session: null, user: null, userRole: null, loading: false });
-      }
 
-      supabase.auth.onAuthStateChange(async (event, session) => {
-        if (session?.user) {
-          try {
-            const role = await getUserRole(session.user.id);
-            set({ session, user: session.user, userRole: role });
-          } catch (error) {
-            console.error('Auth error:', error);
-            set({ 
-              session: null, 
-              user: null, 
-              userRole: null,
-              error: 'Authentication failed'
-            });
-          }
-        } else {
-          set({ session: null, user: null, userRole: null });
-        }
-      });
+      if (session?.user) {
+        const role = await fetchUserRoleWithRetry(session.user.id);
+        set({ user: session.user, session, role, loading: false });
+      } else {
+        set({ user: null, session: null, role: null, loading: false });
+      }
     } catch (error) {
       console.error('Error initializing auth:', error);
       set({ error: 'Failed to initialize authentication', loading: false });
@@ -59,40 +60,50 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signInWithGoogle: async () => {
-    set({ loading: true, error: null });
-    
     try {
+      set({ loading: true, error: null });
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          }
+          redirectTo: `${window.location.origin}/auth/callback`
         }
       });
-      
-      if (error) {
-        set({ error: error.message, loading: false });
-        return { success: false, error: error.message };
-      }
-      
-      return { success: true };
-    } catch (error: any) {
-      const errorMessage = error?.message || 'An unknown error occurred';
-      set({ error: errorMessage, loading: false });
-      return { success: false, error: errorMessage };
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error signing in with Google:', error);
+      set({ error: 'Failed to sign in with Google', loading: false });
     }
   },
 
   signOut: async () => {
-    set({ loading: true });
-    
     try {
-      await supabase.auth.signOut();
-      set({ session: null, user: null, userRole: null, loading: false });
-    } catch (error: any) {
-      set({ error: error?.message || 'Failed to sign out', loading: false });
+      set({ loading: true, error: null });
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      set({ user: null, session: null, role: null, loading: false });
+    } catch (error) {
+      console.error('Error signing out:', error);
+      set({ error: 'Failed to sign out', loading: false });
     }
   },
+
+  setError: (error: string | null) => set({ error }),
+  setState: (state: Partial<AuthState>) => set(state)
 }));
+
+// Set up auth state change listener
+supabase.auth.onAuthStateChange(async (event, session) => {
+  const store = useAuthStore.getState();
+  
+  if (event === 'SIGNED_IN' && session?.user) {
+    try {
+      const role = await fetchUserRoleWithRetry(session.user.id);
+      store.setState({ user: session.user, session, role, loading: false });
+    } catch (error) {
+      console.error('Error handling auth state change:', error);
+      store.setState({ error: 'Failed to handle authentication state change', loading: false });
+    }
+  } else if (event === 'SIGNED_OUT') {
+    store.setState({ user: null, session: null, role: null, loading: false });
+  }
+});
