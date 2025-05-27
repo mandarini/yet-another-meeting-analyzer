@@ -10,7 +10,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
-export type UserRole = 'super_admin' | 'admin' | 'sales' | 'user';
+export type UserRole = 'super_admin' | 'user';
 
 export interface UserWithRole {
   id: string;
@@ -23,10 +23,13 @@ export interface UserWithRole {
 export const getUserRole = async (userId: string): Promise<UserRole> => {
   try {
     const { data, error } = await supabase
-      .rpc('get_user_role', { user_id: userId });
+      .from('user_info')
+      .select('role')
+      .eq('id', userId)
+      .single();
 
     if (error) throw error;
-    return (data || 'user') as UserRole;
+    return (data?.role || 'user') as UserRole;
   } catch (error) {
     console.error('Error fetching user role:', error);
     return 'user';
@@ -39,7 +42,7 @@ export const hasRole = async (userId: string, roles: UserRole[]): Promise<boolea
 };
 
 export const isAdmin = async (userId: string): Promise<boolean> => {
-  return hasRole(userId, ['super_admin', 'admin']);
+  return hasRole(userId, ['super_admin']);
 };
 
 export const modifyUserRole = async (
@@ -48,9 +51,9 @@ export const modifyUserRole = async (
   currentUserId: string
 ): Promise<{ success: boolean; error?: string }> => {
   try {
-    // Check if current user is admin
-    const isCurrentUserAdmin = await isAdmin(currentUserId);
-    if (!isCurrentUserAdmin) {
+    // Check if current user is super admin
+    const isCurrentUserSuperAdmin = await isAdmin(currentUserId);
+    if (!isCurrentUserSuperAdmin) {
       return { success: false, error: 'Unauthorized' };
     }
 
@@ -60,17 +63,20 @@ export const modifyUserRole = async (
       return { success: false, error: 'Cannot modify super_admin role' };
     }
 
-    // Update role
-    const { error: updateError } = await supabase
-      .from('user_roles')
-      .upsert({ 
-        user_id: userId,
-        role_id: newRole,
-        assigned_by: currentUserId
-      });
+    // Update role in super_admins table
+    if (newRole === 'super_admin') {
+      const { error: insertError } = await supabase
+        .from('super_admins')
+        .upsert({ user_id: userId });
 
-    if (updateError) {
-      throw updateError;
+      if (insertError) throw insertError;
+    } else {
+      const { error: deleteError } = await supabase
+        .from('super_admins')
+        .delete()
+        .eq('user_id', userId);
+
+      if (deleteError) throw deleteError;
     }
 
     // Log the action
