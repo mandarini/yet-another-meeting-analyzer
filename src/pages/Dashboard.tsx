@@ -79,61 +79,69 @@ const Dashboard = () => {
 
       {/* Summary stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-l-4 border-l-indigo-500">
-          <CardContent className="p-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Meetings</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalMeetings}</p>
+        <Link to="/historical">
+          <Card className="border-l-4 border-l-indigo-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+            <CardContent className="p-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Meetings</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.totalMeetings}</p>
+                </div>
+                <div className="p-2 bg-indigo-100 dark:bg-indigo-900 rounded-md">
+                  <FileText className="h-6 w-6 text-indigo-500 dark:text-indigo-400" />
+                </div>
               </div>
-              <div className="p-2 bg-indigo-100 dark:bg-indigo-900 rounded-md">
-                <FileText className="h-6 w-6 text-indigo-500 dark:text-indigo-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card className="border-l-4 border-l-teal-500">
-          <CardContent className="p-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Pending Follow-ups</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.pendingFollowUps}</p>
+        <Link to="/follow-ups">
+          <Card className="border-l-4 border-l-teal-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+            <CardContent className="p-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Pending Follow-ups</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.pendingFollowUps}</p>
+                </div>
+                <div className="p-2 bg-teal-100 dark:bg-teal-900 rounded-md">
+                  <Clock className="h-6 w-6 text-teal-500 dark:text-teal-400" />
+                </div>
               </div>
-              <div className="p-2 bg-teal-100 dark:bg-teal-900 rounded-md">
-                <Clock className="h-6 w-6 text-teal-500 dark:text-teal-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card className="border-l-4 border-l-green-500">
-          <CardContent className="p-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Completed Tasks</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.completedTasks}</p>
+        <Link to="/follow-ups">
+          <Card className="border-l-4 border-l-green-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+            <CardContent className="p-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Completed Tasks</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.completedTasks}</p>
+                </div>
+                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-md">
+                  <CheckCircle2 className="h-6 w-6 text-green-500 dark:text-green-400" />
+                </div>
               </div>
-              <div className="p-2 bg-green-100 dark:bg-green-900 rounded-md">
-                <CheckCircle2 className="h-6 w-6 text-green-500 dark:text-green-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Link>
 
-        <Card className="border-l-4 border-l-orange-500">
-          <CardContent className="p-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Identified Opportunities</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.opportunities}</p>
+        <Link to="/opportunities">
+          <Card className="border-l-4 border-l-orange-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+            <CardContent className="p-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Identified Opportunities</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.opportunities}</p>
+                </div>
+                <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-md">
+                  <TrendingUp className="h-6 w-6 text-orange-500 dark:text-orange-400" />
+                </div>
               </div>
-              <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-md">
-                <TrendingUp className="h-6 w-6 text-orange-500 dark:text-orange-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Chart and trends */}
