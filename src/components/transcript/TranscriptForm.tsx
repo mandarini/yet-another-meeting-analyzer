@@ -35,6 +35,7 @@ const TranscriptForm = () => {
   const [isNewCompany, setIsNewCompany] = useState(false);
   const [companyError, setCompanyError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [loadingCompanies, setLoadingCompanies] = useState(true);
   
   const {
     register,
@@ -53,15 +54,32 @@ const TranscriptForm = () => {
   const newCompanyName = watch('newCompanyName');
   
   useEffect(() => {
+    let mounted = true;
+
     const loadCompanies = async () => {
       try {
+        setLoadingCompanies(true);
         const data = await getCompanies();
-        setCompanies(data.map(c => ({ id: c.id, name: c.name })));
+        if (mounted) {
+          setCompanies(data.map(c => ({ id: c.id, name: c.name })));
+        }
       } catch (err) {
         console.error('Error loading companies:', err);
+        if (mounted) {
+          setCompanyError('Failed to load companies');
+        }
+      } finally {
+        if (mounted) {
+          setLoadingCompanies(false);
+        }
       }
     };
+
     loadCompanies();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -145,35 +163,49 @@ const TranscriptForm = () => {
             />
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-4">
             <div>
-              <Select
-                label="Company"
-                {...register('companyName', { required: 'Company is required' })}
-                error={errors.companyName?.message}
-              >
-                <option value="">Select a company</option>
-                {companies.map((company) => (
-                  <option key={company.id} value={company.name}>
-                    {company.name}
-                  </option>
-                ))}
-                <option value="new">
-                  + Add New Company
-                </option>
-              </Select>
+              <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Company
+              </label>
+              <div className="mt-1">
+                {loadingCompanies ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-indigo-500"></div>
+                    <span className="text-sm text-gray-500">Loading companies...</span>
+                  </div>
+                ) : companyError ? (
+                  <div className="text-sm text-red-500">{companyError}</div>
+                ) : (
+                  <>
+                    <Select
+                      id="companyName"
+                      {...register('companyName', { required: 'Please select a company' })}
+                      error={errors.companyName?.message}
+                    >
+                      <option value="">Select a company</option>
+                      {companies.map((company) => (
+                        <option key={company.id} value={company.id}>
+                          {company.name}
+                        </option>
+                      ))}
+                      <option value="new">+ Add New Company</option>
+                    </Select>
 
-              {isNewCompany && (
-                <div className="mt-2">
-                  <Input
-                    placeholder="Enter new company name"
-                    {...register('newCompanyName', {
-                      required: isNewCompany ? 'Company name is required' : false,
-                    })}
-                    error={companyError || errors.newCompanyName?.message}
-                  />
-                </div>
-              )}
+                    {isNewCompany && (
+                      <div className="mt-2">
+                        <Input
+                          placeholder="Enter new company name"
+                          {...register('newCompanyName', {
+                            required: isNewCompany ? 'Company name is required' : false,
+                          })}
+                          error={companyError || errors.newCompanyName?.message}
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
             
             <Select

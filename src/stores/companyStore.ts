@@ -10,6 +10,7 @@ interface CompanyState {
   loadCompanies: () => Promise<void>;
   loadCompany: (id: string) => Promise<void>;
   clearCurrentCompany: () => void;
+  clearError: () => void;
 }
 
 export const useCompanyStore = create<CompanyState>((set) => ({
@@ -33,7 +34,7 @@ export const useCompanyStore = create<CompanyState>((set) => ({
   },
   
   loadCompany: async (id) => {
-    set({ loading: true, error: null });
+    set({ loading: true, error: null, currentCompany: null });
     
     try {
       const data = await getCompany(id);
@@ -41,12 +42,17 @@ export const useCompanyStore = create<CompanyState>((set) => ({
     } catch (error: any) {
       set({ 
         error: error?.message || 'Failed to load company', 
-        loading: false 
+        loading: false,
+        currentCompany: null
       });
     }
   },
   
   clearCurrentCompany: () => {
-    set({ currentCompany: null });
+    set({ currentCompany: null, error: null });
+  },
+
+  clearError: () => {
+    set({ error: null });
   }
 }));

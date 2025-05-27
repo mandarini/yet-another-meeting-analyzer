@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { submitTranscript, getMeeting } from '../lib/supabase';
+import { getMeeting, submitTranscript } from '../lib/supabase';
 
 interface TranscriptState {
   currentMeeting: any | null;
@@ -7,9 +7,11 @@ interface TranscriptState {
   error: string | null;
   success: boolean;
   
-  submitNewTranscript: (transcriptData: any) => Promise<any>;
-  loadMeeting: (id: string) => Promise<any>;
+  loadMeeting: (id: string) => Promise<void>;
+  submitNewTranscript: (data: any) => Promise<void>;
   clearCurrentMeeting: () => void;
+  clearError: () => void;
+  clearSuccess: () => void;
 }
 
 export const useTranscriptStore = create<TranscriptState>((set) => ({
@@ -18,79 +20,45 @@ export const useTranscriptStore = create<TranscriptState>((set) => ({
   error: null,
   success: false,
   
-  submitNewTranscript: async (transcriptData) => {
-    set({ loading: true, error: null, success: false });
-    
-    try {
-      const result = await submitTranscript(transcriptData);
-      
-      if (!result) {
-        set({ 
-          error: 'Failed to submit transcript', 
-          loading: false, 
-          success: false 
-        });
-        return null;
-      }
-      
-      set({ 
-        currentMeeting: result, 
-        loading: false, 
-        success: true 
-      });
-      
-      return result;
-    } catch (error: any) {
-      console.error('Error submitting transcript:', error);
-      set({ 
-        error: error?.message || 'An error occurred while submitting the transcript', 
-        loading: false, 
-        success: false 
-      });
-      return null;
-    }
-  },
-  
   loadMeeting: async (id) => {
-    set({ loading: true, error: null });
+    set({ loading: true, error: null, currentMeeting: null });
     
     try {
-      console.log('Loading meeting:', id);
-      const meeting = await getMeeting(id);
-      
-      if (!meeting) {
-        console.error('No meeting data returned');
-        set({ 
-          error: 'Meeting not found', 
-          loading: false,
-          currentMeeting: null
-        });
-        return null;
-      }
-      
-      console.log('Meeting loaded:', meeting);
-      set({ 
-        currentMeeting: meeting, 
-        loading: false 
-      });
-      
-      return meeting;
+      const data = await getMeeting(id);
+      set({ currentMeeting: data, loading: false });
     } catch (error: any) {
-      console.error('Error loading meeting:', error);
       set({ 
-        error: error?.message || 'Failed to load meeting data', 
+        error: error?.message || 'Failed to load meeting', 
         loading: false,
         currentMeeting: null
       });
-      return null;
+    }
+  },
+  
+  submitNewTranscript: async (data) => {
+    set({ loading: true, error: null, success: false });
+    
+    try {
+      await submitTranscript(data);
+      set({ success: true, loading: false });
+    } catch (error: any) {
+      set({ 
+        error: error?.message || 'Failed to submit transcript', 
+        loading: false,
+        success: false
+      });
     }
   },
   
   clearCurrentMeeting: () => {
-    set({ 
-      currentMeeting: null,
-      success: false,
-      error: null
-    });
+    set({ currentMeeting: null, error: null });
+  },
+
+  clearError: () => {
+    set({ error: null });
+  },
+
+  clearSuccess: () => {
+    set({ success: false });
   }
 }));

@@ -12,9 +12,19 @@ const AnalysisResults = () => {
   const [activeTab, setActiveTab] = useState('summary');
 
   useEffect(() => {
-    if (id) {
-      loadMeeting(id);
-    }
+    let mounted = true;
+
+    const fetchData = async () => {
+      if (id) {
+        await loadMeeting(id);
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      mounted = false;
+    };
   }, [id, loadMeeting]);
 
   // Function to render urgency indicator

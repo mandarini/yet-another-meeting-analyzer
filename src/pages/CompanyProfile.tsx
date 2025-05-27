@@ -21,9 +21,19 @@ const CompanyProfile = () => {
   const { loadCompany, currentCompany, loading, error } = useCompanyStore();
 
   useEffect(() => {
-    if (id) {
-      loadCompany(id);
-    }
+    let mounted = true;
+
+    const fetchData = async () => {
+      if (id) {
+        await loadCompany(id);
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      mounted = false;
+    };
   }, [id, loadCompany]);
 
   const formatDate = (dateString: string) => {
