@@ -15,6 +15,7 @@ import FollowUps from './pages/FollowUps';
 import Companies from './pages/Companies';
 import CompanyProfile from './pages/CompanyProfile';
 import PainPoints from './pages/PainPoints';
+import Opportunities from './pages/Opportunities';
 import AdminDashboard from './pages/admin/Dashboard';
 import NotFound from './pages/NotFound';
 
@@ -59,6 +60,7 @@ function App() {
             <Route path="/companies" element={session ? <Companies /> : <Navigate to="/login" />} />
             <Route path="/companies/:id" element={session ? <CompanyProfile /> : <Navigate to="/login" />} />
             <Route path="/pain-points" element={session ? <PainPoints /> : <Navigate to="/login" />} />
+            <Route path="/opportunities" element={session ? <Opportunities /> : <Navigate to="/login" />} />
             <Route 
               path="/admin" 
               element={

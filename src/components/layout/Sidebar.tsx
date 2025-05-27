@@ -9,7 +9,8 @@ import {
   BarChart2, 
   ClipboardCheck,
   Users,
-  X
+  X,
+  Lightbulb
 } from 'lucide-react';
 import { hasRole } from '../../lib/auth';
 
@@ -41,6 +42,7 @@ const Sidebar = ({ closeSidebar }: SidebarProps) => {
     { path: '/submit', label: 'Submit Transcript', icon: <FileText size={20} /> },
     { path: '/companies', label: 'Companies', icon: <Building2 size={20} /> },
     { path: '/pain-points', label: 'Pain Points', icon: <AlertCircle size={20} /> },
+    { path: '/opportunities', label: 'Opportunities', icon: <Lightbulb size={20} /> },
     { path: '/historical', label: 'Historical Data', icon: <BarChart2 size={20} /> },
     { path: '/follow-ups', label: 'Follow Ups', icon: <ClipboardCheck size={20} /> },
   ];
