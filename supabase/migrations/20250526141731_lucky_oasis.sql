@@ -118,7 +118,7 @@ CREATE OR REPLACE FUNCTION assign_default_role()
 RETURNS trigger AS $$
 BEGIN
   INSERT INTO public.user_roles (user_id, role_id)
-  VALUES (NEW.id, 'user');
+  VALUES (NEW.id, 'sales');
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
