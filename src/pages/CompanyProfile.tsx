@@ -384,6 +384,31 @@ const CompanyProfile = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Why Now */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <AlertCircle className="mr-2" size={20} />
+            Current Context
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Why Now?</h3>
+              <p className="text-gray-700 dark:text-gray-300">
+                {currentCompany.latest_meeting?.transcript_processed?.whyNow || 'No specific trigger mentioned.'}
+              </p>
+            </div>
+            {currentCompany.latest_meeting?.transcript_processed?.whyNow && (
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                Last updated: {formatDate(currentCompany.last_meeting_date)}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

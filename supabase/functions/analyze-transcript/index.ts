@@ -119,7 +119,20 @@ SECONDARY INFORMATION:
 - Years using Nx
 - Workspace size (number of projects/apps)
 - How they adopted Nx (started new project vs added to existing)
-- Satisfaction with Nx and Nx Cloud (1-10 scale)
+- SATISFACTION SCORES (CRITICAL):
+  * Look for explicit statements about satisfaction with Nx and Nx Cloud
+  * Examples of satisfaction statements:
+    - "We're very happy with Nx, I'd give it a 9/10"
+    - "Nx Cloud has been great, probably an 8 out of 10"
+    - "We're somewhat satisfied with Nx, maybe a 6/10"
+    - "Nx Cloud is okay, I'd rate it a 5"
+  * If no explicit score is mentioned, infer from context:
+    - Very positive feedback = 8-10
+    - Somewhat positive = 6-7
+    - Neutral = 5
+    - Somewhat negative = 3-4
+    - Very negative = 1-2
+  * If no satisfaction mentioned at all, use 5 (neutral) instead of 0
 - Feature requests for Nx or Nx Cloud
 - Current benefits they're seeing
 - Favorite Nx features
@@ -260,8 +273,8 @@ Return a JSON object with this exact structure:
     workspaceSize: results.workspaceSize || 'unknown',
     nxAdoptionApproach: results.nxAdoptionApproach || 'unknown',
     satisfaction: {
-      nx: results.satisfaction?.nx || 0,
-      nxCloud: results.satisfaction?.nxCloud || 0
+      nx: results.satisfaction?.nx ?? 5,
+      nxCloud: results.satisfaction?.nxCloud ?? 5
     },
     featureRequests: {
       nx: Array.isArray(results.featureRequests?.nx) ? results.featureRequests.nx : [],

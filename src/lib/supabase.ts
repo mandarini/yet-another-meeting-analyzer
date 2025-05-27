@@ -88,7 +88,18 @@ export const getCompany = async (id: string) => {
     throw error;
   }
 
-  return data;
+  // Sort meetings by date in descending order
+  const sortedMeetings = data.meetings?.sort((a: any, b: any) => 
+    new Date(b.date).getTime() - new Date(a.date).getTime()
+  ) || [];
+
+  // Add latest meeting and last meeting date
+  return {
+    ...data,
+    meetings: sortedMeetings,
+    latest_meeting: sortedMeetings[0] || null,
+    last_meeting_date: sortedMeetings[0]?.date || null
+  };
 };
 
 interface Meeting {

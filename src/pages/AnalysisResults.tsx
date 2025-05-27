@@ -182,6 +182,13 @@ const AnalysisResults = () => {
                     ))}
                   </div>
                 </div>
+
+                <div className="mt-6">
+                  <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Why Now?</h3>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {currentMeeting.transcript_processed?.whyNow || 'No specific trigger mentioned.'}
+                  </p>
+                </div>
               </CardContent>
             </Card>
 
