@@ -25,13 +25,12 @@ Deno.serve(async (req) => {
     if (event === 'SIGNED_IN') {
       const { user } = session;
 
-      // Log the sign-in attempt
+      // Log the sign-in attempt without domain restrictions
       await supabase.from('audit_logs').insert({
         user_id: user.id,
         action: 'sign_in_attempt',
         details: {
           email: user.email,
-          domain: user.email?.split('@')[1],
           timestamp: new Date().toISOString()
         }
       });
