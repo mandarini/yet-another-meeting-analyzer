@@ -152,7 +152,7 @@ const Dashboard = () => {
                 date: formatDate(meeting.date),
                 painPoints: meeting.pain_points?.length || 0,
                 followUps: meeting.follow_ups?.length || 0,
-              }))}>
+              })).reverse()}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
                 <YAxis />
