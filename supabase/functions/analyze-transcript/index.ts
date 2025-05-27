@@ -206,7 +206,42 @@ Return a JSON object with this exact structure:
     temperature: 0.1,
   });
 
-  const results = JSON.parse(response.choices[0].message.content);
+  let results;
+  try {
+    const content = response.choices[0].message.content;
+    // First, try to clean the response by removing any potential control characters
+    const cleanedContent = content.replace(/[^\x20-\x7E]/g, '');
+    
+    // Try to parse the JSON, if it fails, try to fix common truncation issues
+    try {
+      results = JSON.parse(cleanedContent);
+    } catch (parseError) {
+      // If the content ends with an incomplete object/array, try to complete it
+      const fixedContent = cleanedContent
+        .replace(/,\s*$/, '') // Remove trailing comma
+        .replace(/,\s*([}\]])/g, '$1') // Remove comma before closing bracket/brace
+        .replace(/([{[])\s*$/, '$1}') // Add closing brace if missing
+        .replace(/}\s*$/, '}') // Ensure single closing brace
+        .replace(/]\s*$/, ']') // Ensure single closing bracket
+        .replace(/(["\w\s]+):\s*$/, '$1: "unknown"}') // Handle truncated property values
+        .replace(/(["\w\s]+):\s*"([^"]*)$/, '$1: "$2"}') // Handle truncated string values
+        .replace(/(["\w\s]+):\s*(\d+)$/, '$1: $2}') // Handle truncated number values
+        .replace(/(["\w\s]+):\s*\[([^\]]*)$/, '$1: [$2]}') // Handle truncated arrays
+        .replace(/(["\w\s]+):\s*{([^}]*)$/, '$1: {$2}}'); // Handle truncated objects
+      
+      try {
+        results = JSON.parse(fixedContent);
+      } catch (finalError) {
+        console.error('Failed to parse even after fixing:', finalError);
+        console.error('Fixed content:', fixedContent);
+        throw new Error('Failed to parse GPT response even after attempting to fix truncation.');
+      }
+    }
+  } catch (error) {
+    console.error('Error parsing GPT response:', error);
+    console.error('Raw response:', response.choices[0].message.content);
+    throw new Error('Failed to parse GPT response. The response was not valid JSON.');
+  }
   
   // Validate and ensure required structure
   return {
@@ -604,13 +639,17 @@ Deno.serve(async (req) => {
     const followUpPromises = analysisResults.followUps.map(async (followUp) => {
       try {
         console.log('Storing follow-up:', followUp);
+        const deadline = followUp.deadline.toLowerCase() === 'asap' 
+          ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // Set to tomorrow
+          : followUp.deadline;
+
         const { error: followUpError } = await supabase
           .from('follow_ups')
           .insert({
             meeting_id: meetingId,
             description: followUp.description,
-            deadline: followUp.deadline,
-            assigned_to: followUp.assignedTo || userId,
+            deadline: deadline,
+            assigned_to: userId,
             status: 'pending'
           });
         
