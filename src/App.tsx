@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAuthStore } from './stores/authStore';
 
@@ -26,7 +26,7 @@ import { AuthProvider } from './context/AuthContext';
 import RequireAuth from './components/auth/RequireAuth';
 
 function App() {
-  const { initializeAuth, session, loading } = useAuthStore();
+  const { initializeAuth, loading } = useAuthStore();
 
   useEffect(() => {
     initializeAuth();
@@ -51,56 +51,20 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/login" element={!session ? <Login /> : <Navigate to="/" />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           
           <Route element={<AppLayout />}>
-            <Route path="/" element={
-              <RequireAuth>
-                <Dashboard />
-              </RequireAuth>
-            } />
-            <Route path="/submit" element={
-              <RequireAuth>
-                <SubmitTranscript />
-              </RequireAuth>
-            } />
-            <Route path="/analysis/:id" element={
-              <RequireAuth>
-                <AnalysisResults />
-              </RequireAuth>
-            } />
-            <Route path="/historical" element={
-              <RequireAuth>
-                <HistoricalData />
-              </RequireAuth>
-            } />
-            <Route path="/follow-ups" element={
-              <RequireAuth>
-                <FollowUps />
-              </RequireAuth>
-            } />
-            <Route path="/companies" element={
-              <RequireAuth>
-                <Companies />
-              </RequireAuth>
-            } />
-            <Route path="/companies/:id" element={
-              <RequireAuth>
-                <CompanyProfile />
-              </RequireAuth>
-            } />
-            <Route path="/pain-points" element={
-              <RequireAuth>
-                <PainPoints />
-              </RequireAuth>
-            } />
-            <Route path="/opportunities" element={
-              <RequireAuth>
-                <Opportunities />
-              </RequireAuth>
-            } />
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/submit" element={<SubmitTranscript />} />
+            <Route path="/analysis/:id" element={<AnalysisResults />} />
+            <Route path="/historical" element={<HistoricalData />} />
+            <Route path="/follow-ups" element={<FollowUps />} />
+            <Route path="/companies" element={<Companies />} />
+            <Route path="/companies/:id" element={<CompanyProfile />} />
+            <Route path="/pain-points" element={<PainPoints />} />
+            <Route path="/opportunities" element={<Opportunities />} />
             <Route path="/admin" element={
               <RequireAuth allowedRoles={['super_admin', 'admin']}>
                 <AdminDashboard />

@@ -26,15 +26,15 @@ const fetchUserRoleWithRetry = async (userId: string, retries = MAX_ROLE_FETCH_R
   try {
     const role = await getUserRole(userId);
     if (role) return role;
-    throw new Error('No role found');
   } catch {
     if (retries > 0) {
       await delay(ROLE_FETCH_DELAY);
       return fetchUserRoleWithRetry(userId, retries - 1);
     }
-    console.warn('Failed to fetch user role after retries, using default role');
-    return 'user';
   }
+  // If we get here, either no role was found or all retries failed
+  console.warn('Using default role: sales');
+  return 'sales';
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
