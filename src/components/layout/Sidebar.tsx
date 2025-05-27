@@ -7,7 +7,6 @@ import {
   AlertCircle, 
   BarChart2, 
   ClipboardCheck,
-  Users,
   X,
   Lightbulb
 } from 'lucide-react';
@@ -32,7 +31,6 @@ const Sidebar = ({ closeSidebar }: SidebarProps) => {
     { path: '/opportunities', label: 'Opportunities', icon: <Lightbulb size={20} /> },
     { path: '/historical', label: 'Historical Data', icon: <BarChart2 size={20} /> },
     { path: '/follow-ups', label: 'Follow Ups', icon: <ClipboardCheck size={20} /> },
-    { path: '/admin', label: 'Admin', icon: <Users size={20} /> },
   ];
 
   return (
