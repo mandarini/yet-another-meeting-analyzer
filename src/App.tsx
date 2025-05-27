@@ -65,6 +65,12 @@ function App() {
 
   useEffect(() => {
     initializeAuth();
+    // Cleanup on unmount
+    return () => {
+      if (window.__authCleanup) {
+        window.__authCleanup();
+      }
+    };
   }, [initializeAuth]);
 
   if (loading) {
