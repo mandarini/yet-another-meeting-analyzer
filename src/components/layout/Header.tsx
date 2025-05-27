@@ -35,7 +35,7 @@ const Header = ({ user }: HeaderProps) => {
       <div className="px-4 md:px-6 h-16 flex items-center justify-between">
         <div className="flex items-center">
           <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-100 hidden md:block">
-            Transcript Analyzer
+            yet another meeting analyzer
           </h1>
         </div>
         
