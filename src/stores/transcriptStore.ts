@@ -1,14 +1,41 @@
 import { create } from 'zustand';
 import { getMeeting, submitTranscript } from '../lib/supabase';
 
+interface Meeting {
+  id: string;
+  date: string;
+  title: string;
+  company_id: string;
+  participants: string[];
+  transcript_raw: string;
+  transcript_processed: {
+    mainPain?: string;
+    whyNow?: string;
+    callObjective?: string;
+    problematicTasks?: string[];
+    currentBenefits?: string[];
+    favoriteFeatures?: string[];
+    featureRequests?: {
+      nx: string[];
+      nxCloud: string[];
+    };
+    summary?: string;
+  } | null;
+  created_by: string;
+  companies: {
+    id: string;
+    name: string;
+  };
+}
+
 interface TranscriptState {
-  currentMeeting: any | null;
+  currentMeeting: Meeting | null;
   loading: boolean;
   error: string | null;
   success: boolean;
   
   loadMeeting: (id: string) => Promise<void>;
-  submitNewTranscript: (data: any) => Promise<void>;
+  submitNewTranscript: (data: any) => Promise<{ meetingId: string }>;
   clearCurrentMeeting: () => void;
   clearError: () => void;
   clearSuccess: () => void;
@@ -21,17 +48,21 @@ export const useTranscriptStore = create<TranscriptState>((set) => ({
   success: false,
   
   loadMeeting: async (id) => {
-    set({ loading: true, error: null, currentMeeting: null });
+    set({ loading: true, error: null });
     
     try {
       const data = await getMeeting(id);
+      if (!data) {
+        throw new Error('Meeting not found');
+      }
       set({ currentMeeting: data, loading: false });
-    } catch (error: any) {
+    } catch (error) {
       set({ 
-        error: error?.message || 'Failed to load meeting', 
+        error: error instanceof Error ? error.message : 'Failed to load meeting', 
         loading: false,
         currentMeeting: null
       });
+      throw error;
     }
   },
   
@@ -42,9 +73,9 @@ export const useTranscriptStore = create<TranscriptState>((set) => ({
       const result = await submitTranscript(data);
       set({ success: true, loading: false });
       return result;
-    } catch (error: any) {
+    } catch (error) {
       set({ 
-        error: error?.message || 'Failed to submit transcript', 
+        error: error instanceof Error ? error.message : 'Failed to submit transcript', 
         loading: false,
         success: false
       });

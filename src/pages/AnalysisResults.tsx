@@ -8,7 +8,7 @@ import { BarChart2, FileText, Check, AlertCircle, ExternalLink, Clock, ArrowLeft
 
 const AnalysisResults = () => {
   const { id } = useParams<{ id: string }>();
-  const { loadMeeting, currentMeeting, loading, error } = useTranscriptStore();
+  const { loadMeeting, currentMeeting, loading, error, clearCurrentMeeting } = useTranscriptStore();
   const [activeTab, setActiveTab] = useState('summary');
 
   useEffect(() => {
@@ -16,16 +16,22 @@ const AnalysisResults = () => {
 
     const fetchData = async () => {
       if (id) {
-        await loadMeeting(id);
+        try {
+          await loadMeeting(id);
+        } catch (error) {
+          console.error('Error loading meeting:', error);
+        }
       }
     };
 
+    // Clear any existing data when the component mounts or id changes
+    clearCurrentMeeting();
     fetchData();
 
     return () => {
       mounted = false;
     };
-  }, [id, loadMeeting]);
+  }, [id, loadMeeting, clearCurrentMeeting]);
 
   // Function to render urgency indicator
   const renderUrgencyIndicator = (score: number) => {
@@ -53,7 +59,8 @@ const AnalysisResults = () => {
     });
   };
 
-  if (loading) {
+  // Show loading state only if we're actually loading and don't have data
+  if (loading && !currentMeeting) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
@@ -64,12 +71,29 @@ const AnalysisResults = () => {
     );
   }
 
-  if (error || !currentMeeting) {
+  // Show error state if we have an error and no data
+  if (error && !currentMeeting) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
         <AlertCircle size={48} className="text-red-500 mb-4" />
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Error Loading Results</h2>
-        <p className="text-gray-600 dark:text-gray-300 mb-6">{error || 'Meeting not found'}</p>
+        <p className="text-gray-600 dark:text-gray-300 mb-6">{error}</p>
+        <Link to="/">
+          <Button leftIcon={<ArrowLeft size={16} />}>
+            Back to Dashboard
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
+  // If we have no data and no error, show a not found state
+  if (!currentMeeting && !loading && !error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <AlertCircle size={48} className="text-gray-400 mb-4" />
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Meeting Not Found</h2>
+        <p className="text-gray-600 dark:text-gray-300 mb-6">The requested meeting could not be found.</p>
         <Link to="/">
           <Button leftIcon={<ArrowLeft size={16} />}>
             Back to Dashboard
