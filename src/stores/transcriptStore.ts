@@ -39,14 +39,16 @@ export const useTranscriptStore = create<TranscriptState>((set) => ({
     set({ loading: true, error: null, success: false });
     
     try {
-      await submitTranscript(data);
+      const result = await submitTranscript(data);
       set({ success: true, loading: false });
+      return result;
     } catch (error: any) {
       set({ 
         error: error?.message || 'Failed to submit transcript', 
         loading: false,
         success: false
       });
+      throw error;
     }
   },
   
