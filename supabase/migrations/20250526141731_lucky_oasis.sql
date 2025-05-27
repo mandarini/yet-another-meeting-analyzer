@@ -96,23 +96,6 @@ CREATE POLICY "Audit logs are viewable by admins"
     )
   );
 
--- Create function to check email domain
-CREATE OR REPLACE FUNCTION check_email_domain()
-RETURNS trigger AS $$
-BEGIN
-  IF NEW.email NOT LIKE '%@nrwl.io' THEN
-    RAISE EXCEPTION 'Only @nrwl.io email addresses are allowed';
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Create trigger to check email domain before insert
-CREATE TRIGGER check_email_domain_trigger
-  BEFORE INSERT ON auth.users
-  FOR EACH ROW
-  EXECUTE FUNCTION check_email_domain();
-
 -- Create function to assign default role
 CREATE OR REPLACE FUNCTION assign_default_role()
 RETURNS trigger AS $$
