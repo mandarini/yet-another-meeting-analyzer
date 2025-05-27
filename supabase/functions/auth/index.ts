@@ -25,24 +25,26 @@ Deno.serve(async (req) => {
     if (event === 'SIGNED_IN') {
       const { user } = session;
 
-      if (!user.email?.endsWith('@nrwl.io')) {
-        // Delete the user and their session
-        await supabase.auth.admin.deleteUser(user.id);
-        
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: 'Unauthorized email domain'
-          }),
-          {
-            status: 403,
-            headers: {
-              'Content-Type': 'application/json',
-              ...corsHeaders,
-            },
-          }
-        );
-      }
+      // Log the sign-in attempt
+      await supabase.from('audit_logs').insert({
+        user_id: user.id,
+        action: 'sign_in_attempt',
+        details: {
+          email: user.email,
+          domain: user.email?.split('@')[1],
+          timestamp: new Date().toISOString()
+        }
+      });
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        }
+      );
     }
 
     return new Response(
