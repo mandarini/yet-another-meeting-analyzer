@@ -1,26 +1,23 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { useAuthStore } from '../stores/authStore';
 
-export default function AuthCallback() {
+const AuthCallback = () => {
   const navigate = useNavigate();
+  const { handleAuthCallback } = useAuthStore();
 
   useEffect(() => {
-    const handleAuthCallback = async () => {
+    const handleCallback = async () => {
       try {
-        const { error } = await supabase.auth.getSession();
-        if (error) throw error;
-        
-        // Redirect to home page after successful authentication
-        navigate('/', { replace: true });
+        await handleAuthCallback();
+        navigate('/');
       } catch (error) {
-        console.error('Error handling auth callback:', error);
-        navigate('/login', { replace: true });
+        navigate('/unauthorized');
       }
     };
 
-    handleAuthCallback();
-  }, [navigate]);
+    handleCallback();
+  }, [handleAuthCallback, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -34,4 +31,6 @@ export default function AuthCallback() {
       </div>
     </div>
   );
-} 
+};
+
+export default AuthCallback; 

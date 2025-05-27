@@ -12,6 +12,7 @@ interface AuthState {
   initializeAuth: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+  handleAuthCallback: () => Promise<void>;
   setError: (error: string | null) => void;
   setState: (state: Partial<AuthState>) => void;
 }
@@ -84,6 +85,22 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch (error) {
       console.error('Error signing out:', error);
       set({ error: 'Failed to sign out', loading: false });
+    }
+  },
+
+  handleAuthCallback: async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const role = await fetchUserRoleWithRetry(session.user.id);
+        set({ user: session.user, session, role, loading: false });
+      } else {
+        set({ user: null, session: null, role: null, loading: false });
+      }
+    } catch (error) {
+      console.error('Error handling auth callback:', error);
+      set({ error: 'Failed to handle authentication callback', loading: false });
+      throw error;
     }
   },
 
