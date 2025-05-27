@@ -72,7 +72,8 @@ export const getCompany = async (id: string) => {
           description,
           urgency_score,
           category,
-          is_main_pain
+          is_main_pain,
+          status
         )
       )
     `)
@@ -81,15 +82,28 @@ export const getCompany = async (id: string) => {
 
   if (error) throw error;
 
-  // Sort meetings by date and get the latest one
-  const sortedMeetings = data.meetings?.sort((a, b) => 
+  const sortedMeetings = data.meetings?.sort((a, b) =>
     new Date(b.date).getTime() - new Date(a.date).getTime()
   ) || [];
 
   return {
     ...data,
     latest_meeting: sortedMeetings[0] || null,
-    last_meeting_date: sortedMeetings[0]?.date || null
+    last_meeting_date: sortedMeetings[0]?.date || null,
+    nx_version: data.nx_version || '',
+    nx_cloud_usage: data.nx_cloud_usage || 'unknown',
+    ci_provider: data.ci_provider || '',
+    satisfaction_nx: data.satisfaction_nx ?? 0,
+    satisfaction_nx_cloud: data.satisfaction_nx_cloud ?? 0,
+    technologies_used: data.technologies_used || [],
+    years_using_nx: data.years_using_nx || '',
+    workspace_size: data.workspace_size || '',
+    nx_cloud_why_not: data.nx_cloud_why_not || '',
+    nx_adoption_approach: data.nx_adoption_approach || '',
+    agents_usage: data.agents_usage || 'unknown',
+    mfe_usage: data.mfe_usage || 'unknown',
+    crystal_usage: data.crystal_usage || 'unknown',
+    atomizer_usage: data.atomizer_usage || 'unknown',
   };
 };
 

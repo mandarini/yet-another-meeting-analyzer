@@ -15,18 +15,60 @@ export interface Database {
           name: string
           domain: string
           nx_usage_level: string
+          nx_version: string
+          nx_cloud_usage: string
+          nx_cloud_why_not: string
+          ci_provider: string
+          satisfaction_nx: number
+          satisfaction_nx_cloud: number
+          technologies_used: string[]
+          years_using_nx: string
+          workspace_size: string
+          nx_adoption_approach: string
+          agents_usage: string
+          mfe_usage: string
+          crystal_usage: string
+          atomizer_usage: string
         }
         Insert: {
           id?: string
           name: string
           domain: string
           nx_usage_level: string
+          nx_version?: string
+          nx_cloud_usage?: string
+          nx_cloud_why_not?: string
+          ci_provider?: string
+          satisfaction_nx?: number
+          satisfaction_nx_cloud?: number
+          technologies_used?: string[]
+          years_using_nx?: string
+          workspace_size?: string
+          nx_adoption_approach?: string
+          agents_usage?: string
+          mfe_usage?: string
+          crystal_usage?: string
+          atomizer_usage?: string
         }
         Update: {
           id?: string
           name?: string
           domain?: string
           nx_usage_level?: string
+          nx_version?: string
+          nx_cloud_usage?: string
+          nx_cloud_why_not?: string
+          ci_provider?: string
+          satisfaction_nx?: number
+          satisfaction_nx_cloud?: number
+          technologies_used?: string[]
+          years_using_nx?: string
+          workspace_size?: string
+          nx_adoption_approach?: string
+          agents_usage?: string
+          mfe_usage?: string
+          crystal_usage?: string
+          atomizer_usage?: string
         }
         Relationships: []
       }
@@ -259,7 +301,7 @@ export interface Database {
         ]
       }
     }
-    Views: {}
-    Functions: {}
+    Views: object
+    Functions: object
   }
 }
