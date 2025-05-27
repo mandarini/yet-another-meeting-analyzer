@@ -203,12 +203,6 @@ BEGIN
     ) as nx_opportunities
   FROM meetings m
   JOIN companies c ON m.company_id = c.id
-  WHERE m.id = meeting_id;
+  WHERE m.id = get_meeting_details.meeting_id;
 END;
-$$;
-
--- Grant necessary permissions with specific parameter types
-GRANT EXECUTE ON FUNCTION match_pain_points(vector(1536), float, uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION match_all_pain_points(vector(1536), float, int) TO authenticated;
-GRANT EXECUTE ON FUNCTION get_meetings_with_company() TO authenticated;
-GRANT EXECUTE ON FUNCTION get_meeting_details(uuid) TO authenticated; 
+$$; 

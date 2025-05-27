@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import { useEffect } from "react";
 import { useAuthStore } from "./stores/authStore";
 
@@ -21,12 +26,49 @@ import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
 import AuthCallback from "./pages/AuthCallback";
 
-// Auth provider
-import { AuthProvider } from "./context/AuthContext";
-import RequireAuth from "./components/auth/RequireAuth";
+// Authenticated Route Component
+function AuthenticatedRoute({
+  children,
+  requireSuperAdmin = false,
+}: {
+  children: React.ReactNode;
+  requireSuperAdmin?: boolean;
+}) {
+  const { user, isSuperAdmin, loading } = useAuthStore();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <img
+            src="/assets/yama-face.png"
+            alt="Yama"
+            className="w-16 h-16 mx-auto mb-4 animate-bounce"
+          />
+          <p className="text-gray-600 dark:text-gray-300">
+            Loading your workspace...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // If not logged in at all, redirect to login
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // If admin route is requested but user is not super admin, redirect to dashboard
+  if (requireSuperAdmin && !isSuperAdmin) {
+    return <Navigate to="/" replace />;
+  }
+
+  // Everyone who is logged in gets access to regular routes
+  return <>{children}</>;
+}
 
 function App() {
-  const { initializeAuth, loading } = useAuthStore();
+  const { loading, initializeAuth } = useAuthStore();
 
   useEffect(() => {
     initializeAuth();
@@ -50,37 +92,98 @@ function App() {
   }
 
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/unauthorized" element={<Unauthorized />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
+    <Router>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
 
-          <Route element={<AppLayout />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/submit" element={<SubmitTranscript />} />
-            <Route path="/analysis/:id" element={<AnalysisResults />} />
-            <Route path="/historical" element={<HistoricalData />} />
-            <Route path="/follow-ups" element={<FollowUps />} />
-            <Route path="/companies" element={<Companies />} />
-            <Route path="/companies/:id" element={<CompanyProfile />} />
-            <Route path="/pain-points" element={<PainPoints />} />
-            <Route path="/opportunities" element={<Opportunities />} />
-            <Route
-              path="/admin"
-              element={
-                <RequireAuth allowedRoles={["super_admin", "admin"]}>
-                  <AdminDashboard />
-                </RequireAuth>
-              }
-            />
-          </Route>
+        <Route element={<AppLayout />}>
+          <Route
+            path="/"
+            element={
+              <AuthenticatedRoute>
+                <Dashboard />
+              </AuthenticatedRoute>
+            }
+          />
+          <Route
+            path="/submit"
+            element={
+              <AuthenticatedRoute>
+                <SubmitTranscript />
+              </AuthenticatedRoute>
+            }
+          />
+          <Route
+            path="/analysis/:id"
+            element={
+              <AuthenticatedRoute>
+                <AnalysisResults />
+              </AuthenticatedRoute>
+            }
+          />
+          <Route
+            path="/historical"
+            element={
+              <AuthenticatedRoute>
+                <HistoricalData />
+              </AuthenticatedRoute>
+            }
+          />
+          <Route
+            path="/follow-ups"
+            element={
+              <AuthenticatedRoute>
+                <FollowUps />
+              </AuthenticatedRoute>
+            }
+          />
+          <Route
+            path="/companies"
+            element={
+              <AuthenticatedRoute>
+                <Companies />
+              </AuthenticatedRoute>
+            }
+          />
+          <Route
+            path="/companies/:id"
+            element={
+              <AuthenticatedRoute>
+                <CompanyProfile />
+              </AuthenticatedRoute>
+            }
+          />
+          <Route
+            path="/pain-points"
+            element={
+              <AuthenticatedRoute>
+                <PainPoints />
+              </AuthenticatedRoute>
+            }
+          />
+          <Route
+            path="/opportunities"
+            element={
+              <AuthenticatedRoute>
+                <Opportunities />
+              </AuthenticatedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <AuthenticatedRoute requireSuperAdmin>
+                <AdminDashboard />
+              </AuthenticatedRoute>
+            }
+          />
+        </Route>
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Router>
   );
 }
 

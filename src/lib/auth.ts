@@ -1,117 +1,16 @@
-import { createClient } from '@supabase/supabase-js';
-import { Database } from '../types/supabase';
+import { supabase } from './supabase';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
-}
-
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
-
-export type UserRole = 'super_admin' | 'user';
-
-export interface UserWithRole {
-  id: string;
-  email: string;
-  role: UserRole;
-  created_at: string;
-  last_sign_in_at: string | null;
-}
-
-export const getUserRole = async (userId: string): Promise<UserRole> => {
-  try {
-    const { data, error } = await supabase
-      .from('user_info')
-      .select('role')
-      .eq('id', userId)
-      .single();
-
-    if (error) throw error;
-    return (data?.role || 'user') as UserRole;
-  } catch (error) {
-    console.error('Error fetching user role:', error);
-    return 'user';
-  }
+export const getUser = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
 };
 
-export const hasRole = async (userId: string, roles: UserRole[]): Promise<boolean> => {
-  const userRole = await getUserRole(userId);
-  return roles.includes(userRole);
+export const signOut = async () => {
+  const { error } = await supabase.auth.signOut();
+  if (error) throw error;
 };
 
-export const isAdmin = async (userId: string): Promise<boolean> => {
-  return hasRole(userId, ['super_admin']);
-};
-
-export const modifyUserRole = async (
-  userId: string,
-  newRole: UserRole,
-  currentUserId: string
-): Promise<{ success: boolean; error?: string }> => {
-  try {
-    // Check if current user is super admin
-    const isCurrentUserSuperAdmin = await isAdmin(currentUserId);
-    if (!isCurrentUserSuperAdmin) {
-      return { success: false, error: 'Unauthorized' };
-    }
-
-    // Check if target user is super_admin
-    const targetUserRole = await getUserRole(userId);
-    if (targetUserRole === 'super_admin' && currentUserId !== userId) {
-      return { success: false, error: 'Cannot modify super_admin role' };
-    }
-
-    // Update role in super_admins table
-    if (newRole === 'super_admin') {
-      const { error: insertError } = await supabase
-        .from('super_admins')
-        .upsert({ user_id: userId });
-
-      if (insertError) throw insertError;
-    } else {
-      const { error: deleteError } = await supabase
-        .from('super_admins')
-        .delete()
-        .eq('user_id', userId);
-
-      if (deleteError) throw deleteError;
-    }
-
-    // Log the action
-    await supabase.from('audit_logs').insert({
-      user_id: currentUserId,
-      action: 'modify_role',
-      details: {
-        target_user: userId,
-        old_role: targetUserRole,
-        new_role: newRole
-      }
-    });
-
-    return { success: true };
-  } catch (error: any) {
-    console.error('Error modifying user role:', error);
-    return { success: false, error: error.message };
-  }
-};
-
-export const getAllUsers = async (): Promise<UserWithRole[]> => {
-  try {
-    const { data, error } = await supabase.rpc('get_all_users');
-    
-    if (error) throw error;
-    
-    return data.map(user => ({
-      id: user.id,
-      email: user.email,
-      role: user.role as UserRole,
-      created_at: user.created_at,
-      last_sign_in_at: user.last_sign_in_at
-    }));
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    return [];
-  }
+export const getSession = async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session;
 };
