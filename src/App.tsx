@@ -29,12 +29,10 @@ import AuthCallback from "./pages/AuthCallback";
 // Authenticated Route Component
 function AuthenticatedRoute({
   children,
-  requireSuperAdmin = false,
 }: {
   children: React.ReactNode;
-  requireSuperAdmin?: boolean;
 }) {
-  const { user, isSuperAdmin, loading } = useAuthStore();
+  const { user, loading } = useAuthStore();
 
   if (loading) {
     return (
@@ -56,11 +54,6 @@ function AuthenticatedRoute({
   // If not logged in at all, redirect to login
   if (!user) {
     return <Navigate to="/login" replace />;
-  }
-
-  // If admin route is requested but user is not super admin, redirect to dashboard
-  if (requireSuperAdmin && !isSuperAdmin) {
-    return <Navigate to="/" replace />;
   }
 
   // Everyone who is logged in gets access to regular routes
@@ -174,7 +167,7 @@ function App() {
           <Route
             path="/admin"
             element={
-              <AuthenticatedRoute requireSuperAdmin>
+              <AuthenticatedRoute>
                 <AdminDashboard />
               </AuthenticatedRoute>
             }
