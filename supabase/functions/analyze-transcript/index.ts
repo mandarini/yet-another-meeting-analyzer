@@ -641,8 +641,12 @@ Deno.serve(async (req) => {
         description: analysisResults.mainPain,
         urgencyScore: 10,
         category: 'main_pain',
+        is_main_pain: true
       },
-      ...analysisResults.additionalPainPoints
+      ...analysisResults.additionalPainPoints.map(point => ({
+        ...point,
+        is_main_pain: false
+      }))
     ];
 
     // Generate embeddings for pain points
@@ -660,6 +664,7 @@ Deno.serve(async (req) => {
             urgency_score: point.urgencyScore,
             category: point.category,
             embedding: embeddings[index],
+            is_main_pain: point.is_main_pain
           })
           .select()
           .single();

@@ -65,38 +65,29 @@ export const getCompany = async (id: string) => {
         id,
         date,
         title,
+        participants,
         transcript_processed,
         pain_points (
           id,
           description,
           urgency_score,
-          category
-        ),
-        follow_ups (
-          id,
-          description,
-          deadline,
-          status
+          category,
+          is_main_pain
         )
       )
     `)
     .eq('id', id)
     .single();
 
-  if (error) {
-    console.error('Error fetching company:', error);
-    throw error;
-  }
+  if (error) throw error;
 
-  // Sort meetings by date in descending order
-  const sortedMeetings = data.meetings?.sort((a: any, b: any) => 
+  // Sort meetings by date and get the latest one
+  const sortedMeetings = data.meetings?.sort((a, b) => 
     new Date(b.date).getTime() - new Date(a.date).getTime()
   ) || [];
 
-  // Add latest meeting and last meeting date
   return {
     ...data,
-    meetings: sortedMeetings,
     latest_meeting: sortedMeetings[0] || null,
     last_meeting_date: sortedMeetings[0]?.date || null
   };
@@ -133,6 +124,7 @@ interface Meeting {
     urgency_score: number;
     category: string;
     status: string;
+    is_main_pain: boolean;
   }>;
   follow_ups: Array<{
     id: string;
@@ -172,7 +164,8 @@ export const getMeetings = async (limit = 10): Promise<Meeting[]> => {
         description,
         urgency_score,
         category,
-        status
+        status,
+        is_main_pain
       ),
       follow_ups (
         id,

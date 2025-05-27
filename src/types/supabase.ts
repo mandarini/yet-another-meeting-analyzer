@@ -165,6 +165,7 @@ export interface Database {
           category: string
           related_nx_features: string[]
           status: string
+          is_main_pain: boolean
         }
         Insert: {
           id?: string
@@ -174,6 +175,7 @@ export interface Database {
           category: string
           related_nx_features: string[]
           status: string
+          is_main_pain: boolean
         }
         Update: {
           id?: string
@@ -183,6 +185,7 @@ export interface Database {
           category?: string
           related_nx_features?: string[]
           status?: string
+          is_main_pain?: boolean
         }
         Relationships: [
           {

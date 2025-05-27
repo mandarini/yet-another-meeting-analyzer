@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
-import { AlertCircle, BarChart2, TrendingUp } from 'lucide-react';
+import { AlertCircle, BarChart2, TrendingUp, Star } from 'lucide-react';
 import { getMeetings } from '../lib/supabase';
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar } from 'recharts';
 
@@ -10,9 +10,10 @@ interface PainPoint {
   description: string;
   urgency_score: number;
   category: string;
-  status?: string;
+  status: string;
+  is_main_pain: boolean;
   meeting_id?: string;
-  created_at?: string;
+  company?: string;
 }
 
 interface Meeting {
@@ -46,6 +47,7 @@ interface Meeting {
     description: string;
     deadline: string;
     status: string;
+    assigned_to: string;
   }>;
   nx_opportunities: Array<{
     id: string;
@@ -68,7 +70,6 @@ function isValidTranscriptProcessed(data: unknown): data is Meeting['transcript_
   if (obj.currentBenefits !== undefined && !Array.isArray(obj.currentBenefits)) return false;
   if (obj.favoriteFeatures !== undefined && !Array.isArray(obj.favoriteFeatures)) return false;
   if (obj.featureRequests !== undefined) {
-    if (typeof obj.featureRequests !== 'object') return false;
     const featureRequests = obj.featureRequests as Record<string, unknown>;
     if (featureRequests.nx !== undefined && !Array.isArray(featureRequests.nx)) return false;
     if (featureRequests.nxCloud !== undefined && !Array.isArray(featureRequests.nxCloud)) return false;
@@ -99,10 +100,14 @@ const PainPoints: React.FC = () => {
         ...meeting,
         transcript_processed: isValidTranscriptProcessed(meeting.transcript_processed) 
           ? meeting.transcript_processed 
-          : null
+          : null,
+        pain_points: (meeting.pain_points || []).map(point => ({
+          ...point,
+          is_main_pain: Boolean(point.is_main_pain)
+        }))
       }));
       
-      setMeetings(validMeetings as Meeting[]);
+      setMeetings(validMeetings);
     } catch (err) {
       console.error('Error loading meetings:', err);
       setError('Failed to load pain points data');
@@ -120,16 +125,23 @@ const PainPoints: React.FC = () => {
     : meetings.filter(m => m.companies?.name === selectedCompany);
 
   // Prepare data for charts
-  const painPointsByCategory = filteredMeetings.reduce((acc: Record<string, number>, meeting) => {
+  const painPointsByCategory = filteredMeetings.reduce((acc: Record<string, { total: number; main: number }>, meeting) => {
     meeting.pain_points?.forEach(point => {
-      acc[point.category] = (acc[point.category] || 0) + 1;
+      if (!acc[point.category]) {
+        acc[point.category] = { total: 0, main: 0 };
+      }
+      acc[point.category].total++;
+      if (point.is_main_pain) {
+        acc[point.category].main++;
+      }
     });
     return acc;
   }, {});
 
-  const chartData = Object.entries(painPointsByCategory).map(([category, count]) => ({
+  const chartData = Object.entries(painPointsByCategory).map(([category, data]) => ({
     category: category.replace('_', ' '),
-    count,
+    total: data.total,
+    main: data.main
   }));
 
   // Helper function to render urgency indicator
@@ -207,6 +219,24 @@ const PainPoints: React.FC = () => {
           <CardContent className="p-4">
             <div className="flex justify-between items-center">
               <div>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Main Pain Points</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {filteredMeetings.reduce((sum, m) => 
+                    sum + (m.pain_points?.filter(p => p.is_main_pain).length || 0), 0
+                  )}
+                </p>
+              </div>
+              <div className="p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-md">
+                <Star className="h-6 w-6 text-yellow-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex justify-between items-center">
+              <div>
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">High Urgency Issues</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {filteredMeetings.reduce((sum, m) => 
@@ -240,7 +270,8 @@ const PainPoints: React.FC = () => {
                   <XAxis dataKey="category" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="count" fill="#FF7B7B" />
+                  <Bar dataKey="total" fill="#FF7B7B" name="Total Pain Points" />
+                  <Bar dataKey="main" fill="#FFD700" name="Main Pain Points" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -264,9 +295,14 @@ const PainPoints: React.FC = () => {
                 .map((point) => (
                   <div key={point.id} className="flex items-center justify-between">
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                        {point.description}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        {point.is_main_pain && (
+                          <Star className="h-4 w-4 text-yellow-500" />
+                        )}
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                          {point.description}
+                        </p>
+                      </div>
                       <div className="mt-1">
                         <Badge variant="primary">
                           {point.category.replace('_', ' ')}
@@ -321,18 +357,34 @@ const PainPoints: React.FC = () => {
                   .flatMap(m => m.pain_points?.map(p => ({ ...p, company: m.companies?.name })) || [])
                   .map((point) => (
                     <tr key={point.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                        {point.description}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          {point.is_main_pain && (
+                            <Star className="h-4 w-4 text-yellow-500" />
+                          )}
+                          <span className="text-gray-900 dark:text-gray-100">
+                            {point.description}
+                          </span>
+                        </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <Badge variant="primary">
-                          {point.category.replace('_', ' ')}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Badge variant="secondary">
+                          {point.category}
                         </Badge>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {renderUrgencyIndicator(point.urgency_score)}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full ${
+                              point.urgency_score >= 8 ? 'bg-red-500' :
+                              point.urgency_score >= 5 ? 'bg-yellow-500' :
+                              'bg-green-500'
+                            }`}
+                            style={{ width: `${point.urgency_score * 10}%` }}
+                          />
+                        </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <Badge variant={point.status === 'active' ? 'warning' : 'success'}>
                           {point.status}
                         </Badge>

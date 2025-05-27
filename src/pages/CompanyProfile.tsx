@@ -396,6 +396,12 @@ const CompanyProfile = () => {
         <CardContent>
           <div className="space-y-4">
             <div>
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Main Pain Point</h3>
+              <p className="text-gray-700 dark:text-gray-300">
+                {currentCompany.latest_meeting?.pain_points?.find(p => p.is_main_pain)?.description || 'No main pain point identified.'}
+              </p>
+            </div>
+            <div>
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Why Now?</h3>
               <p className="text-gray-700 dark:text-gray-300">
                 {currentCompany.latest_meeting?.transcript_processed?.whyNow || 'No specific trigger mentioned.'}
