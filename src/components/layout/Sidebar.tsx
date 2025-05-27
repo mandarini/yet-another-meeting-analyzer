@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { 
   Home, 
@@ -12,26 +11,14 @@ import {
   X,
   Lightbulb
 } from 'lucide-react';
-import { hasRole } from '../../lib/auth';
 
 interface SidebarProps {
   closeSidebar: () => void;
 }
 
 const Sidebar = ({ closeSidebar }: SidebarProps) => {
-  const { signOut, user } = useAuthStore();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { signOut } = useAuthStore();
   const location = useLocation();
-  
-  useEffect(() => {
-    const checkAdminRole = async () => {
-      if (user) {
-        const hasAdminRole = await hasRole(user.id, ['super_admin', 'admin']);
-        setIsAdmin(hasAdminRole);
-      }
-    };
-    checkAdminRole();
-  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -45,12 +32,8 @@ const Sidebar = ({ closeSidebar }: SidebarProps) => {
     { path: '/opportunities', label: 'Opportunities', icon: <Lightbulb size={20} /> },
     { path: '/historical', label: 'Historical Data', icon: <BarChart2 size={20} /> },
     { path: '/follow-ups', label: 'Follow Ups', icon: <ClipboardCheck size={20} /> },
+    { path: '/admin', label: 'Admin', icon: <Users size={20} /> },
   ];
-
-  // Add admin link if user has admin privileges
-  if (isAdmin) {
-    navItems.push({ path: '/admin', label: 'Admin', icon: <Users size={20} /> });
-  }
 
   return (
     <div className="h-full flex flex-col py-4">
@@ -72,9 +55,9 @@ const Sidebar = ({ closeSidebar }: SidebarProps) => {
 
       <nav className="flex-1 px-2 mt-8 space-y-1">
         {navItems.map((item) => (
-          <a
+          <Link
             key={item.path}
-            href={item.path}
+            to={item.path}
             className={`flex items-center px-4 py-2 text-sm font-medium rounded-md ${
               location.pathname === item.path
                 ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
@@ -83,7 +66,7 @@ const Sidebar = ({ closeSidebar }: SidebarProps) => {
           >
             {item.icon}
             <span className="ml-3">{item.label}</span>
-          </a>
+          </Link>
         ))}
       </nav>
 

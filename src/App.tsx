@@ -1,9 +1,5 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
 import { useAuthStore } from "./stores/authStore";
 
 // Layout
@@ -23,13 +19,18 @@ import Opportunities from "./pages/Opportunities";
 import AdminDashboard from "./pages/admin/Dashboard";
 import NotFound from "./pages/NotFound";
 import Unauthorized from "./pages/Unauthorized";
+import AuthCallback from "./pages/AuthCallback";
 
 // Auth provider
 import { AuthProvider } from "./context/AuthContext";
 import RequireAuth from "./components/auth/RequireAuth";
 
 function App() {
-  const { loading, user } = useAuthStore();
+  const { initializeAuth, loading } = useAuthStore();
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
 
   if (loading) {
     return (
@@ -52,86 +53,30 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Public routes */}
-          <Route
-            path="/login"
-            element={user ? <Navigate to="/dashboard" replace /> : <Login />}
-          />
+          <Route path="/login" element={<Login />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
-          <Route
-            path="/auth/callback"
-            element={
-              user ? (
-                <Navigate to="/dashboard" replace />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
-          />
+          <Route path="/auth/callback" element={<AuthCallback />} />
 
-          {/* Protected routes with layout */}
           <Route element={<AppLayout />}>
-            <Route
-              path="/"
-              element={user ? <Dashboard /> : <Navigate to="/login" replace />}
-            />
-            <Route
-              path="/submit"
-              element={
-                user ? <SubmitTranscript /> : <Navigate to="/login" replace />
-              }
-            />
-            <Route
-              path="/analysis/:id"
-              element={
-                user ? <AnalysisResults /> : <Navigate to="/login" replace />
-              }
-            />
-            <Route
-              path="/historical"
-              element={
-                user ? <HistoricalData /> : <Navigate to="/login" replace />
-              }
-            />
-            <Route
-              path="/follow-ups"
-              element={user ? <FollowUps /> : <Navigate to="/login" replace />}
-            />
-            <Route
-              path="/companies"
-              element={user ? <Companies /> : <Navigate to="/login" replace />}
-            />
-            <Route
-              path="/companies/:id"
-              element={
-                user ? <CompanyProfile /> : <Navigate to="/login" replace />
-              }
-            />
-            <Route
-              path="/pain-points"
-              element={user ? <PainPoints /> : <Navigate to="/login" replace />}
-            />
-            <Route
-              path="/opportunities"
-              element={
-                user ? <Opportunities /> : <Navigate to="/login" replace />
-              }
-            />
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/submit" element={<SubmitTranscript />} />
+            <Route path="/analysis/:id" element={<AnalysisResults />} />
+            <Route path="/historical" element={<HistoricalData />} />
+            <Route path="/follow-ups" element={<FollowUps />} />
+            <Route path="/companies" element={<Companies />} />
+            <Route path="/companies/:id" element={<CompanyProfile />} />
+            <Route path="/pain-points" element={<PainPoints />} />
+            <Route path="/opportunities" element={<Opportunities />} />
             <Route
               path="/admin"
               element={
-                user ? (
-                  <RequireAuth allowedRoles={["super_admin", "admin"]}>
-                    <AdminDashboard />
-                  </RequireAuth>
-                ) : (
-                  <Navigate to="/login" replace />
-                )
+                <RequireAuth allowedRoles={["super_admin", "admin"]}>
+                  <AdminDashboard />
+                </RequireAuth>
               }
             />
           </Route>
 
-          {/* Catch all */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
