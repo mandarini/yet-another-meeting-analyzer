@@ -91,7 +91,56 @@ export const getCompany = async (id: string) => {
   return data;
 };
 
-export const getMeetings = async (limit = 10) => {
+interface Meeting {
+  id: string;
+  date: string;
+  title: string;
+  company_id: string;
+  participants: string[];
+  transcript_raw: string;
+  transcript_processed: {
+    mainPain?: string;
+    whyNow?: string;
+    callObjective?: string;
+    problematicTasks?: string[];
+    currentBenefits?: string[];
+    favoriteFeatures?: string[];
+    featureRequests?: {
+      nx: string[];
+      nxCloud: string[];
+    };
+    summary?: string;
+  } | null;
+  created_by: string;
+  companies: {
+    id: string;
+    name: string;
+  };
+  pain_points: Array<{
+    id: string;
+    description: string;
+    urgency_score: number;
+    category: string;
+    status: string;
+  }>;
+  follow_ups: Array<{
+    id: string;
+    description: string;
+    deadline: string;
+    status: string;
+    assigned_to: string;
+  }>;
+  nx_opportunities: Array<{
+    id: string;
+    nx_feature: string;
+    confidence_score: number;
+    suggested_approach: string;
+  }>;
+}
+
+export const getMeetings = async (limit = 10): Promise<Meeting[]> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
   const { data, error } = await supabase
     .from('meetings')
     .select(`
@@ -111,13 +160,15 @@ export const getMeetings = async (limit = 10) => {
         id,
         description,
         urgency_score,
-        category
+        category,
+        status
       ),
       follow_ups (
         id,
         description,
         deadline,
-        status
+        status,
+        assigned_to
       ),
       nx_opportunities (
         id,
@@ -134,7 +185,11 @@ export const getMeetings = async (limit = 10) => {
     return [];
   }
 
-  return data;
+  // Filter follow-ups to only show those assigned to the current user
+  return data.map(meeting => ({
+    ...meeting,
+    follow_ups: meeting.follow_ups?.filter(fu => fu.assigned_to === user?.id) || []
+  })) as Meeting[];
 };
 
 export const getMeeting = async (id: string) => {
