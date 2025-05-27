@@ -15,10 +15,12 @@ import FollowUps from './pages/FollowUps';
 import Companies from './pages/Companies';
 import CompanyProfile from './pages/CompanyProfile';
 import PainPoints from './pages/PainPoints';
+import AdminDashboard from './pages/admin/Dashboard';
 import NotFound from './pages/NotFound';
 
 // Auth provider
 import { AuthProvider } from './context/AuthContext';
+import RequireAuth from './components/auth/RequireAuth';
 
 function App() {
   const { initializeAuth, session, loading } = useAuthStore();
@@ -57,6 +59,14 @@ function App() {
             <Route path="/companies" element={session ? <Companies /> : <Navigate to="/login" />} />
             <Route path="/companies/:id" element={session ? <CompanyProfile /> : <Navigate to="/login" />} />
             <Route path="/pain-points" element={session ? <PainPoints /> : <Navigate to="/login" />} />
+            <Route 
+              path="/admin" 
+              element={
+                <RequireAuth allowedRoles={['super_admin', 'admin']}>
+                  <AdminDashboard />
+                </RequireAuth>
+              } 
+            />
           </Route>
           
           <Route path="*" element={<NotFound />} />

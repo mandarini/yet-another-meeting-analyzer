@@ -1,23 +1,37 @@
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useAuthStore } from '../../stores/authStore';
 import { 
   Home, 
   FileText, 
+  Building2, 
+  AlertCircle, 
   BarChart2, 
   ClipboardCheck,
-  Building2,
-  AlertCircle,
-  LogOut,
+  Users,
   X
 } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
-import { useAuthStore } from '../../stores/authStore';
+import { hasRole } from '../../lib/auth';
 
 interface SidebarProps {
   closeSidebar: () => void;
 }
 
 const Sidebar = ({ closeSidebar }: SidebarProps) => {
-  const { signOut } = useAuthStore();
+  const { signOut, user } = useAuthStore();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const location = useLocation();
   
+  useEffect(() => {
+    const checkAdminRole = async () => {
+      if (user) {
+        const hasAdminRole = await hasRole(user.id, ['super_admin', 'admin']);
+        setIsAdmin(hasAdminRole);
+      }
+    };
+    checkAdminRole();
+  }, [user]);
+
   const handleSignOut = async () => {
     await signOut();
   };
@@ -30,6 +44,11 @@ const Sidebar = ({ closeSidebar }: SidebarProps) => {
     { path: '/historical', label: 'Historical Data', icon: <BarChart2 size={20} /> },
     { path: '/follow-ups', label: 'Follow Ups', icon: <ClipboardCheck size={20} /> },
   ];
+
+  // Add admin link if user has admin privileges
+  if (isAdmin) {
+    navItems.push({ path: '/admin', label: 'Admin', icon: <Users size={20} /> });
+  }
 
   return (
     <div className="h-full flex flex-col py-4">
@@ -48,37 +67,29 @@ const Sidebar = ({ closeSidebar }: SidebarProps) => {
           <X size={20} />
         </button>
       </div>
-      
-      <nav className="mt-8 flex-1">
-        <ul className="space-y-1">
-          {navItems.map((item) => (
-            <li key={item.path}>
-              <NavLink
-                to={item.path}
-                onClick={() => window.innerWidth < 768 && closeSidebar()}
-                className={({ isActive }) => 
-                  `flex items-center px-4 py-2.5 text-sm font-medium transition-colors ${
-                    isActive 
-                      ? 'text-[#FF7B7B] dark:text-[#FF9B9B] bg-pink-50 dark:bg-pink-900/20' 
-                      : 'text-gray-700 dark:text-gray-200 hover:text-[#FF7B7B] dark:hover:text-[#FF9B9B] hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`
-                }
-                end={item.path === '/'}
-              >
-                <span className="mr-3">{item.icon}</span>
-                {item.label}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
+
+      <nav className="flex-1 px-2 mt-8 space-y-1">
+        {navItems.map((item) => (
+          <a
+            key={item.path}
+            href={item.path}
+            className={`flex items-center px-4 py-2 text-sm font-medium rounded-md ${
+              location.pathname === item.path
+                ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+            }`}
+          >
+            {item.icon}
+            <span className="ml-3">{item.label}</span>
+          </a>
+        ))}
       </nav>
-      
+
       <div className="px-4 mt-auto">
         <button
-          className="flex w-full items-center px-4 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
           onClick={handleSignOut}
+          className="w-full flex items-center px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-md"
         >
-          <LogOut size={20} className="mr-3" />
           Sign Out
         </button>
       </div>
