@@ -106,10 +106,6 @@ Yama (Yet Another Meeting Analyzer) is an intelligent meeting analysis tool spec
   - Admin: Full system access
   - Manager: Team oversight and reporting
   - User: Standard meeting analysis access
-- **Advanced Analytics**:
-  - Custom report generation
-  - Team performance metrics
-  - ROI tracking for opportunities
 
 ### Potential Improvements
 
