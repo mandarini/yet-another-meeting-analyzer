@@ -4,14 +4,69 @@
 
 Yama (Yet Another Meeting Analyzer) is an intelligent meeting analysis tool specifically designed for the Nx team. It helps you extract valuable insights from your meeting transcripts and turn them into actionable items.
 
+> **Note**: This application is restricted to @nrwl.io email addresses only. Access is managed through Google Authentication as part of the Nx Google Cloud platform.
+
 ## Features
 
-- **Meeting Analysis**: Submit meeting transcripts and get AI-powered analysis of key points, action items, and insights
-- **Company Management**: Track and manage company-specific meeting data and insights
-- **Follow-up Tracking**: Keep track of action items and follow-ups from meetings
-- **Pain Points Analysis**: Identify and track recurring pain points across meetings
-- **Opportunity Tracking**: Discover and monitor potential opportunities from customer interactions
-- **Historical Data**: Access and analyze historical meeting data for better decision-making
+### Meeting Analysis
+
+- Submit meeting transcripts and get AI-powered analysis of:
+  - Key discussion points and decisions
+  - Action items and follow-ups
+  - Technical challenges and pain points
+  - Potential Nx solution opportunities
+  - Meeting sentiment and engagement levels
+  - Participant roles and contributions
+
+### Company Management
+
+- Track and manage company-specific meeting data and insights
+- View company profile with meeting history
+- Track recurring issues and opportunities
+- Monitor engagement and relationship health
+
+### Follow-up Tracking
+
+- Automated extraction of action items
+- Due date tracking and reminders
+- Status updates and progress monitoring
+- Assignment management
+- Email notification system
+
+### Pain Points Analysis
+
+- Automatic categorization of technical challenges
+- Urgency and impact scoring
+- Trend detection across meetings
+- Related Nx solution mapping
+- Historical tracking and resolution status
+
+### Opportunity Tracking
+
+- Identify potential Nx solution opportunities
+- Track opportunity stages and progress
+- Link opportunities to specific pain points
+- Monitor opportunity value and probability
+- Generate opportunity reports
+
+### Historical Data
+
+- Access and analyze historical meeting data
+- Track trends and patterns
+- Generate insights reports
+- Export data for further analysis
+
+## Pages and Navigation
+
+- **Dashboard**: Overview of recent meetings, pending follow-ups, and key metrics
+- **Submit Transcript**: Form to submit new meeting transcripts for analysis
+- **Analysis Results**: Detailed view of meeting analysis with actionable insights
+- **Historical Data**: Timeline and trends of past meetings and insights
+- **Follow-ups**: Task management and tracking system
+- **Companies**: Company profiles and meeting history
+- **Pain Points**: Tracking and analysis of technical challenges
+- **Opportunities**: Pipeline of potential Nx solution opportunities
+- **Admin Dashboard**: System management and configuration (admin only)
 
 ## Meeting Types Supported
 
@@ -41,6 +96,30 @@ Yama (Yet Another Meeting Analyzer) is an intelligent meeting analysis tool spec
 - Supabase (Backend & Authentication)
 - React Router
 - React Hook Form
+
+## Future Enhancements
+
+### Planned Features
+
+- **Gong Integration**: Automatic meeting transcript syncing
+- **User Role Management**:
+  - Admin: Full system access
+  - Manager: Team oversight and reporting
+  - User: Standard meeting analysis access
+- **Advanced Analytics**:
+  - Custom report generation
+  - Team performance metrics
+  - ROI tracking for opportunities
+
+### Potential Improvements
+
+- Custom dashboard widgets
+- Add notes for each meeting
+- Export functionality for reports
+- API access for external tools
+- Meeting templates and best practices
+- Automated follow-up email generation
+- Integration with project management tools
 
 ## Contributing
 
