@@ -253,6 +253,9 @@ Return a JSON object with this exact structure:
     try {
       results = JSON.parse(cleanedContent);
     } catch (parseError) {
+      console.error('Initial parse error:', parseError);
+      console.error('Raw content:', cleanedContent);
+      
       // If the content ends with an incomplete object/array, try to complete it
       const fixedContent = cleanedContent
         .replace(/,\s*$/, '') // Remove trailing comma
@@ -274,55 +277,89 @@ Return a JSON object with this exact structure:
         throw new Error('Failed to parse GPT response even after attempting to fix truncation.');
       }
     }
+
+    // Validate and ensure required structure with more detailed logging
+    console.log('Parsed results:', JSON.stringify(results, null, 2));
+    
+    // Ensure all required fields are present with proper types
+    const validatedResults = {
+      mainPain: typeof results.mainPain === 'string' ? results.mainPain : 'unknown',
+      whyNow: typeof results.whyNow === 'string' ? results.whyNow : 'unknown',
+      callObjective: typeof results.callObjective === 'string' ? results.callObjective : 'unknown',
+      ciProvider: typeof results.ciProvider === 'string' ? results.ciProvider : 'unknown',
+      problematicTasks: Array.isArray(results.problematicTasks) ? results.problematicTasks : [],
+      technologiesUsed: Array.isArray(results.technologiesUsed) ? results.technologiesUsed : [],
+      nxVersion: typeof results.nxVersion === 'string' ? results.nxVersion : 'unknown',
+      nxCloudUsage: {
+        status: ['yes', 'no', 'considering', 'unknown'].includes(results.nxCloudUsage?.status) 
+          ? results.nxCloudUsage.status 
+          : 'unknown',
+        whyNot: results.nxCloudUsage?.status === 'no' ? (results.nxCloudUsage.whyNot || 'unknown') : undefined
+      },
+      yearsUsingNx: typeof results.yearsUsingNx === 'string' ? results.yearsUsingNx : 'unknown',
+      workspaceSize: typeof results.workspaceSize === 'string' ? results.workspaceSize : 'unknown',
+      nxAdoptionApproach: ['started_with_nx', 'added_to_existing', 'unknown'].includes(results.nxAdoptionApproach)
+        ? results.nxAdoptionApproach
+        : 'unknown',
+      satisfaction: {
+        nx: typeof results.satisfaction?.nx === 'number' ? results.satisfaction.nx : 5,
+        nxCloud: typeof results.satisfaction?.nxCloud === 'number' ? results.satisfaction.nxCloud : 5
+      },
+      featureRequests: {
+        nx: Array.isArray(results.featureRequests?.nx) ? results.featureRequests.nx : [],
+        nxCloud: Array.isArray(results.featureRequests?.nxCloud) ? results.featureRequests.nxCloud : []
+      },
+      currentBenefits: Array.isArray(results.currentBenefits) ? results.currentBenefits : [],
+      favoriteFeatures: Array.isArray(results.favoriteFeatures) ? results.favoriteFeatures : [],
+      advancedFeatureUsage: {
+        agents: ['yes', 'no', 'unknown'].includes(results.advancedFeatureUsage?.agents) 
+          ? results.advancedFeatureUsage.agents 
+          : 'unknown',
+        mfe: ['yes', 'no', 'unknown'].includes(results.advancedFeatureUsage?.mfe)
+          ? results.advancedFeatureUsage.mfe
+          : 'unknown',
+        crystalInferredTasks: ['yes', 'no', 'unknown'].includes(results.advancedFeatureUsage?.crystalInferredTasks)
+          ? results.advancedFeatureUsage.crystalInferredTasks
+          : 'unknown',
+        atomizer: ['yes', 'no', 'unknown'].includes(results.advancedFeatureUsage?.atomizer)
+          ? results.advancedFeatureUsage.atomizer
+          : 'unknown'
+      },
+      participants: Array.isArray(results.participants) ? results.participants : [],
+      followUps: Array.isArray(results.followUps) ? results.followUps.map(followUp => ({
+        description: typeof followUp.description === 'string' ? followUp.description : 'Unknown follow-up',
+        deadline: typeof followUp.deadline === 'string' ? followUp.deadline : 'ASAP',
+        assignedTo: typeof followUp.assignedTo === 'string' ? followUp.assignedTo : 'sales_rep'
+      })) : [{
+        description: 'Schedule next check-in call',
+        deadline: 'ASAP',
+        assignedTo: 'sales_rep'
+      }],
+      executiveSummary: typeof results.executiveSummary === 'string' ? results.executiveSummary : '',
+      additionalPainPoints: Array.isArray(results.additionalPainPoints) 
+        ? results.additionalPainPoints.map(point => ({
+            description: typeof point.description === 'string' ? point.description : 'Unknown pain point',
+            urgencyScore: typeof point.urgencyScore === 'number' ? point.urgencyScore : 5,
+            category: typeof point.category === 'string' ? point.category : 'general'
+          }))
+        : [],
+      nxOpportunities: Array.isArray(results.nxOpportunities)
+        ? results.nxOpportunities.map(opp => ({
+            nx_feature: typeof opp.nx_feature === 'string' ? opp.nx_feature : 'Unknown feature',
+            confidence_score: typeof opp.confidence_score === 'number' ? opp.confidence_score : 0.5,
+            suggested_approach: typeof opp.suggested_approach === 'string' ? opp.suggested_approach : 'Standard implementation'
+          }))
+        : []
+    };
+
+    console.log('Validated results:', JSON.stringify(validatedResults, null, 2));
+    return validatedResults;
+
   } catch (error) {
     console.error('Error parsing GPT response:', error);
     console.error('Raw response:', response.choices[0].message.content);
     throw new Error('Failed to parse GPT response. The response was not valid JSON.');
   }
-  
-  // Validate and ensure required structure
-  return {
-    mainPain: results.mainPain || 'unknown',
-    whyNow: results.whyNow || 'unknown',
-    callObjective: results.callObjective || 'unknown',
-    ciProvider: results.ciProvider || 'unknown',
-    problematicTasks: Array.isArray(results.problematicTasks) ? results.problematicTasks : [],
-    technologiesUsed: Array.isArray(results.technologiesUsed) ? results.technologiesUsed : [],
-    nxVersion: results.nxVersion || 'unknown',
-    nxCloudUsage: {
-      status: results.nxCloudUsage?.status || 'unknown',
-      whyNot: results.nxCloudUsage?.whyNot || undefined
-    },
-    yearsUsingNx: results.yearsUsingNx || 'unknown',
-    workspaceSize: results.workspaceSize || 'unknown',
-    nxAdoptionApproach: results.nxAdoptionApproach || 'unknown',
-    satisfaction: {
-      nx: results.satisfaction?.nx ?? 5,
-      nxCloud: results.satisfaction?.nxCloud ?? 5
-    },
-    featureRequests: {
-      nx: Array.isArray(results.featureRequests?.nx) ? results.featureRequests.nx : [],
-      nxCloud: Array.isArray(results.featureRequests?.nxCloud) ? results.featureRequests.nxCloud : []
-    },
-    currentBenefits: Array.isArray(results.currentBenefits) ? results.currentBenefits : [],
-    favoriteFeatures: Array.isArray(results.favoriteFeatures) ? results.favoriteFeatures : [],
-    advancedFeatureUsage: {
-      agents: results.advancedFeatureUsage?.agents || 'unknown',
-      mfe: results.advancedFeatureUsage?.mfe || 'unknown',
-      crystalInferredTasks: results.advancedFeatureUsage?.crystalInferredTasks || 'unknown',
-      atomizer: results.advancedFeatureUsage?.atomizer || 'unknown'
-    },
-    participants: Array.isArray(results.participants) ? results.participants : [],
-    followUps: Array.isArray(results.followUps) ? results.followUps : [],
-    executiveSummary: results.executiveSummary || '',
-    additionalPainPoints: Array.isArray(results.additionalPainPoints) ? results.additionalPainPoints : [],
-    nxOpportunities: Array.isArray(results.nxOpportunities) ? results.nxOpportunities : [],
-    globalInsights: {
-      similarPainPointsAcrossCustomers: [],
-      industryTrends: [],
-      commonFeatureRequests: []
-    }
-  };
 }
 
 async function generateEmbeddings(painPoints: string[]) {
@@ -404,12 +441,35 @@ async function analyzeGlobalTrends(
 
     if (error || !recentMeetings) return {};
 
-    // Aggregate feature requests across all meetings
+    // Aggregate feature requests across all meetings, including current analysis
     const allFeatureRequests = {
       nx: [] as Array<{feature: string, company: string, date: string}>,
       nxCloud: [] as Array<{feature: string, company: string, date: string}>
     };
 
+    // Add current analysis feature requests
+    if (currentAnalysis.featureRequests) {
+      if (currentAnalysis.featureRequests.nx) {
+        currentAnalysis.featureRequests.nx.forEach((feature: string) => {
+          allFeatureRequests.nx.push({
+            feature,
+            company: 'Current Meeting',
+            date: new Date().toISOString()
+          });
+        });
+      }
+      if (currentAnalysis.featureRequests.nxCloud) {
+        currentAnalysis.featureRequests.nxCloud.forEach((feature: string) => {
+          allFeatureRequests.nxCloud.push({
+            feature,
+            company: 'Current Meeting',
+            date: new Date().toISOString()
+          });
+        });
+      }
+    }
+
+    // Add historical feature requests
     recentMeetings.forEach(meeting => {
       const processed = meeting.transcript_processed;
       if (processed?.featureRequests) {
@@ -460,8 +520,45 @@ async function analyzeGlobalTrends(
       .sort((a, b) => b.requestCount - a.requestCount)
       .slice(0, 10);
 
+    // Analyze if current pain points are common
+    const currentPainPoints = [
+      currentAnalysis.mainPain,
+      ...currentAnalysis.additionalPainPoints.map(p => p.description)
+    ];
+
+    // Get all pain points from recent meetings
+    const allPainPoints = recentMeetings
+      .map(meeting => meeting.transcript_processed?.mainPain)
+      .filter(Boolean);
+
+    // Count pain point frequency
+    const painPointCounts = new Map();
+    allPainPoints.forEach(pain => {
+      const key = pain.toLowerCase();
+      if (!painPointCounts.has(key)) {
+        painPointCounts.set(key, {
+          pain: pain,
+          count: 0,
+          companies: new Set()
+        });
+      }
+      const existing = painPointCounts.get(key);
+      existing.count++;
+    });
+
+    // Check if current pain points are common
+    const commonPainPoints = currentPainPoints.map(pain => {
+      const count = painPointCounts.get(pain.toLowerCase())?.count || 0;
+      return {
+        pain,
+        isCommon: count > 1,
+        frequency: count
+      };
+    });
+
     return {
-      commonFeatureRequests
+      commonFeatureRequests,
+      commonPainPoints
     };
 
   } catch (error) {
