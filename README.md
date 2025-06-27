@@ -1,6 +1,12 @@
 # Yama - Your Friendly Meeting Assistant 🐱
 
-![Yama Logo](/public/assets/yama-face.png)
+<p align="center">
+  <img src="/public/assets/yama-face.png" alt="Yama Logo" width="100" />
+</p>
+
+> **:rocket: Ready for Production!**
+>
+> **To get this app up and running, or to contribute, please read the [Contributing & Onboarding Guide](./CONTRIBUTING.md).**
 
 Yama (Yet Another Meeting Analyzer) is an intelligent meeting analysis tool specifically designed for the Nx team. It helps you extract valuable insights from your meeting transcripts and turn them into actionable items.
 
