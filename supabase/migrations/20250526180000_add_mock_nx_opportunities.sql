@@ -1,3 +1,9 @@
+/*
+  # Seed Mock Nx Opportunities
+
+  This migration seeds the nx_opportunities table with mock data for development and testing purposes. It is safe to run multiple times (uses ON CONFLICT DO NOTHING).
+*/
+
 INSERT INTO nx_opportunities (
   meeting_id,
   pain_point_id,
