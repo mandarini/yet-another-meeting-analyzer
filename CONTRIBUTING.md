@@ -135,29 +135,38 @@ Set these in the Supabase dashboard under Project Settings > Environment Variabl
 
 ## 3. Deployment Steps
 
-### A. Frontend
+### Automatic Deployment with Netlify
 
-1. Clone the repository.
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Set the required environment variables (see above).
-4. Build and deploy using your preferred platform (e.g., Vercel, Netlify, or static hosting):
-   ```bash
-   npm run build
-   # then deploy the contents of the `dist/` folder
-   ```
+Deployment is handled automatically via Netlify by connecting the GitHub repository to the Nx team's Netlify account. Every push to the main branch (or any configured branch) will trigger a new deployment.
 
-### B. Supabase Backend
+**To set up or manage deployments:**
 
-1. Go to your Supabase project dashboard.
-2. Deploy the Edge Functions:
-   - Use the Supabase CLI or dashboard to deploy `supabase/functions/analyze-transcript` and `supabase/functions/auth`.
-   - Ensure the required environment variables are set for each function.
-3. Apply the database migrations:
-   - Use the Supabase CLI or dashboard SQL editor to run the SQL files in `supabase/migrations/` in order.
-   - (Optional) Seed the database using `supabase/seed.sql` if needed.
+1. Ensure you have access to the Nx team's Netlify account and the GitHub repository.
+2. In Netlify, create a new site and select the GitHub repository for Yama.
+3. Netlify will automatically detect the build settings (Vite) and prompt you to set the required environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`).
+4. Once connected, every push to the repository will trigger a build and deploy the latest version to the configured Netlify site.
+
+> **Note:** There is no need for manual deployment or to use other platforms. All deployments are managed through Netlify's GitHub integration.
+
+> **Important:**
+> If you change the Netlify site URL (for example, when renaming the site or switching domains), you **must** contact the Nx Google Auth admin to update the allowed redirect URIs and domains in the Google Auth settings. You may also need to update the Auth settings in the Supabase dashboard to reflect the new site URL. Failing to do so will break authentication for all users.
+
+#### Google Auth Setup for Supabase
+
+To enable Sign in with Google for Yama, you need to configure the following in the Supabase Auth settings and in the Google Cloud Console:
+
+- **Enable Sign in with Google** in Supabase Auth settings.
+- **Client IDs:**
+  - Comma-separated list of client IDs for Web, OAuth, Android apps, One Tap, and Chrome extensions. Obtain these from the Google Cloud Console for the Nx team.
+- **Client Secret (for OAuth):**
+  - The client secret associated with the above client IDs (from Google Cloud Console).
+- **Callback URL (for OAuth):**
+  - `https://XXXX.supabase.co/auth/v1/callback`
+  - This must be registered as an authorized redirect URI in the Google Cloud Console for the OAuth client.
+
+> **Tip:** If you update the Netlify site URL or Supabase project, you may need to update the allowed redirect URIs and domains in both Google Cloud Console and Supabase Auth settings.
+
+For more details, see the official Supabase documentation: [Configure your services (Google Auth)](https://supabase.com/docs/guides/auth/social-login/auth-google#configure-your-services-id)
 
 ---
 
