@@ -1,7 +1,7 @@
 # Yama - Your Friendly Meeting Assistant 🐱
 
 <p align="center">
-  <img src="/public/assets/yama-face.png" alt="Yama Logo" width="100" />
+  <img src="/public/assets/yama-face.png" alt="Yama Logo" width="150" />
 </p>
 
 > **:rocket: Ready for Production!**
