@@ -4,9 +4,15 @@
   <img src="/public/assets/yama-face.png" alt="Yama Logo" width="150" />
 </p>
 
-> **:rocket: Ready for Production!**
+> **:white_check_mark: This app is fully deployed and ready to use!**
 >
-> **To get this app up and running, or to contribute, please read the [Contributing & Onboarding Guide](./CONTRIBUTING.md).**
+> - The Supabase database is set up and requires no further configuration.
+> - The project is under the `nrwl` org on GitHub and is connected to the Nx Netlify account. Netlify auto-deploys on every push to `main`.
+> - Jack can help with Netlify settings if needed.
+> - Steve configured the URL for Google OAuth, which is also set up correctly.
+> - All required environment variables are already in place in Netlify.
+>
+> **If you ever want to set up the project from scratch, see the [Contributing & Onboarding Guide](./CONTRIBUTING.md).**
 
 Yama (Yet Another Meeting Analyzer) is an intelligent meeting analysis tool specifically designed for the Nx team. It helps you extract valuable insights from your meeting transcripts and turn them into actionable items.
 

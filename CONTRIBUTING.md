@@ -105,6 +105,21 @@ This section provides an overview of the main parts of the codebase to help new 
 
 ---
 
+## Deployment & Setup: When Is It Needed?
+
+> **Note:** The app is already fully deployed and configured. You do **not** need to perform any deployment or setup steps to use or contribute to the project as it exists today.
+>
+> **The instructions below are only needed if you want to set up the project from scratch (clean slate), such as for a new environment or a major migration.**
+
+- The production deployment is managed automatically by Netlify, which is connected to the nrwl org GitHub repository. Every push to `main` triggers an auto-deploy.
+- The Supabase database is already set up and requires no further configuration.
+- All environment variables and OAuth settings are already in place.
+- For Netlify settings, contact Jack. For Google OAuth, contact Steve.
+
+If you **do** need to **set up from scratch**, follow the instructions below:
+
+---
+
 ## 1. Prerequisites
 
 - Access to the Nx team's Supabase project
@@ -153,8 +168,6 @@ Deployment is handled automatically via Netlify by connecting the GitHub reposit
 2. In Netlify, create a new site and select the GitHub repository for Yama.
 3. Netlify will automatically detect the build settings (Vite) and prompt you to set the required environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`).
 4. Once connected, every push to the repository will trigger a build and deploy the latest version to the configured Netlify site.
-
-> **Note:** There is no need for manual deployment or to use other platforms. All deployments are managed through Netlify's GitHub integration.
 
 > **Important:**
 > If you change the Netlify site URL (for example, when renaming the site or switching domains), you **must** contact the Nx Google Auth admin to update the allowed redirect URIs and domains in the Google Auth settings. You may also need to update the Auth settings in the Supabase dashboard to reflect the new site URL. Failing to do so will break authentication for all users.
